@@ -10,7 +10,7 @@
 
 **A compact, open-source robot dog designed to *Understand*, *Interact*, and *Learn*.**
 
-[🌐 Website](https://tny-robotics.com/tny-360) • [📸 Instagram](https://instagram.com/furwaz_) • [💬 Discord](https://discord.gg/XGABkx5A4y)
+[🌐 Website](https://tny-robotics.com/tny-360) • [📸 Instagram](https://instagram.com/furwaz_) • [💬 Discord](https://discord.gg/XGABkx5A4y) • [📖 Documentation](https://tny-robotics.com/docs/tny-360/)
 
 </div>
 
@@ -21,13 +21,13 @@
 Everything you need to build the TNY-360 is completely free and open-source.
 Follow the links below to find the technical files and documentation you need to get started!
 
-| Resource | Description | Location | Status |
-| :--- | :--- | :--- | :--- |
-| **💻 Firmware** | ESP-IDF source code and drivers. | [`/Firmware`](./Firmware) | **Available** |
-| **📐 CAD & 3D Files** | FreeCAD source files and STLs. | [`/CAD`](./CAD) | **Available** |
-| **📘 Servo Mod Guide** | Instructions to add position feedback to MG996R. | [`/Docs/Servos`](./Docs/Servos) | *Coming Soon* |
-| **📖 Assembly Guide** | Step-by-step manual for the full build. | [`/Docs/Assembly`](./Docs/Assembly) | *Coming Soon* |
-| **⚡ PCB Design** | All PCBs Gerber, BOM, and Pick'n'Place files. | [`/Electronics/PCBs`](./Electronics/PCBs) | **Available** |
+| Resource | Description | Location |
+| :--- | :--- | :--- |
+| **💻 Firmware** | ESP-IDF source code and drivers. | [`/Firmware`](./Firmware) |
+| **📐 CAD & 3D Files** | FreeCAD source files and STLs. | [`/CAD`](./CAD) |
+| **📘 Servo Mod Guide** | Instructions to add position feedback to MG996R. | [Documentation](https://tny-robotics.com/docs/tny-360/anatomy/electronics/mg996r-mod) |
+| **📖 Assembly Guide** | Step-by-step manual for the full build. | [Documentation](https://tny-robotics.com/docs/tny-360/practical-guide/) |
+| **⚡ PCB Design** | All PCBs Gerber, BOM, and Pick'n'Place files. | [`/Electronics/PCBs`](./Electronics/PCBs) |
 ---
 
 ## ✨ Features
@@ -82,7 +82,9 @@ The firmware is built on **PlatformIO** using the **ESP-IDF** framework.
 
 ## 📂 Repository Structure
 
+* `BOM/` — **Bill of Materials.** Detailed lists of all components, PCBs, screws, and cables, with links.
 * `CAD/` — **Hardware Source.** FreeCAD project files and ready-to-print STLs.
+* `Electronics/PCBs/` — **PCB Designs.** Gerber files, BOMs, and Pick'n'Place for all PCBs.
 * `Firmware/` — **Codebase.** PlatformIO project (C++/ESP-IDF).
 * `Firmware/components/` — **Drivers.** Custom libraries for sensors/actuators.
 
