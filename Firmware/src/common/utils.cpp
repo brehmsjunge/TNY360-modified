@@ -1,4 +1,6 @@
 #include "common/utils.hpp"
+#include "common/LED.hpp"
+#include "ui/Menus.hpp"
 
 const char* ErrorToString(Error err)
 {
@@ -17,4 +19,13 @@ const char* ErrorToString(Error err)
         case Error::OutOfMemory: return "OutOfMemory";
         default: return "???";
     }
+}
+
+void ErrorHandle(ErrorStruct err)
+{
+    // Display error code on LED
+    LED::LoopErrorCode(err.code);
+
+    // If display is available, show the detailed error message
+    Menus::DisplayError(err);
 }

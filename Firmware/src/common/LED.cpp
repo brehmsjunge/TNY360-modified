@@ -1,13 +1,13 @@
-#include "ui/LED.hpp"
+#include "common/LED.hpp"
 #include <freertos/FreeRTOS.h>
 #include <driver/rmt_tx.h>
-#include <esp_log.h>
 #include <cmath>
 #include <memory.h>
+#include "common/Log.hpp"
 
 namespace LED
 {
-    static constexpr gpio_num_t LED_GPIO = GPIO_NUM_48; // GPIO pin for LED data
+    static constexpr gpio_num_t LED_GPIO = GPIO_NUM_46; // GPIO pin for LED data
     static constexpr int RMT_RESOLUTION_HZ = 10'000'000; // RMT resolution in Hz
 
     static const char* TAG = "LED";
@@ -34,7 +34,7 @@ namespace LED
 
     Error Init()
     {
-        ESP_LOGI(TAG, "Create RMT TX channel for WS2812");
+        LOG_SCOPE(TAG, "LED::Init");
 
         // setup led control using RMT
         rmt_tx_channel_config_t tx_chan_config = {
@@ -53,7 +53,6 @@ namespace LED
 
         ESP_ERROR_CHECK(rmt_new_tx_channel(&tx_chan_config, &rmt_tx_channel));
 
-        ESP_LOGI(TAG, "Install RMT bytes encoder for WS2812");
         rmt_bytes_encoder_config_t bytes_encoder_config = {
             .bit0 = {
                 .duration0 = WS2812_T0H_TICKS,
@@ -73,14 +72,16 @@ namespace LED
         };
         ESP_ERROR_CHECK(rmt_new_bytes_encoder(&bytes_encoder_config, &rmt_bytes_encoder));
 
-        ESP_LOGI(TAG, "Enable RMT TX channel");
         ESP_ERROR_CHECK(rmt_enable(rmt_tx_channel));
 
         // launch background task for led update at fixed interval
-        ESP_LOGI(TAG, "Launching update task");
         TaskHandle_t task_handle;
-        xTaskCreate(_update_task, "updateLEDs", 4096, nullptr, 5, &task_handle);
-        
+        BaseType_t err = xTaskCreate(_update_task, "updateLEDs", 4096, nullptr, 5, &task_handle);
+        if (err != pdPASS) {
+            LOG_ERROR(TAG, "Failed to create update task");
+            return Error::Unknown;
+        }
+
         return Error::None;
     }
 
@@ -199,40 +200,50 @@ namespace LED
         return Error::None;
     }
 
+    TaskHandle_t errorLoopTask = nullptr;
     void LoopErrorCode(uint8_t errCode)
     {
-#if DEBUG_MODE == 1
-        return; // skip in debug mode to avoid blocking
-#endif
-        // turn everything off first
-        for (Id i = 0; i < LED_COUNT; ++i) {
-            SetColor(i, {0, 0, 0}, 0.1f);
-        }
+        xTaskCreate([](void* pvParams){
+            uint8_t code = *((uint8_t*) pvParams);
+            // Maybe this could be in the config ?
+            #define LIGHT_INTENSITY 10
+            while (1)
+            {
+                // turn off first led and wait for 2 seconds
+                vTaskDelay(pdMS_TO_TICKS(2000));
+                
+                // turn first led on during 2 seconds (start of error code display)
+                SetColor(0, {LIGHT_INTENSITY, 0, 0}, 0.05f);
+                vTaskDelay(pdMS_TO_TICKS(2000));
 
-        while (1)
-        {
-            // turn off first led and wait for 2 seconds
-            vTaskDelay(pdMS_TO_TICKS(2000));
-            
-            // turn first led on during 2 seconds (start of error code display)
-            SetColor(0, {255, 0, 0}, 0.1f);
-            vTaskDelay(pdMS_TO_TICKS(2000));
-
-            // turn off first led for 500ms before displaying error code
-            SetColor(0, {0, 0, 0}, 0.1f);
-            vTaskDelay(pdMS_TO_TICKS(500));
-
-            // Show error code in red blinks (500ms per byte)
-            for (uint8_t i = 0; i < 8; ++i) {
-                if (errCode & (1 << (7 - i))) {
-                    SetColor(0, {255, 0, 0}, 0.1f); // Red for '1'
-                } else {
-                    SetColor(0, {0, 0, 255}, 0.1f); // Blue for '0'
-                }
+                // turn off first led for 500ms before displaying error code
+                SetColor(0, {0, 0, 0}, 0.05f);
                 vTaskDelay(pdMS_TO_TICKS(500));
-                SetColor(0, {0, 0, 0}, 0.1f); // Off between bits
-                vTaskDelay(pdMS_TO_TICKS(100));
+
+                // Show error code in red blinks (500ms per byte)
+                for (uint8_t i = 0; i < 8; ++i) {
+                    if (code & (1 << (7 - i))) {
+                        SetColor(0, {LIGHT_INTENSITY, 0, 0}, 0.05f); // Red for '1'
+                    } else {
+                        SetColor(0, {0, 0, LIGHT_INTENSITY}, 0.05f); // Blue for '0'
+                    }
+                    vTaskDelay(pdMS_TO_TICKS(500));
+                    SetColor(0, {0, 0, 0}, 0.05f); // Off between bits
+                    vTaskDelay(pdMS_TO_TICKS(100));
+                }
             }
+        }, "LoopErrorCode", 2048, &errCode, tskIDLE_PRIORITY + 1, &errorLoopTask);
+    }
+
+    void clearErrorCode()
+    {
+        if (errorLoopTask != nullptr)
+        {
+            // Delete loop code task
+            vTaskDelete(errorLoopTask);
+            errorLoopTask = nullptr;
+            // turn off LED
+            SetColor(0, {0,0,0});
         }
     }
 
@@ -258,7 +269,7 @@ namespace LED
 
             esp_err_t err = rmt_transmit(rmt_tx_channel, rmt_bytes_encoder, rmt_buffer[current_buffer_idx], sizeof(last_pixels), &transmit_config);
             if (err != ESP_OK) {
-                ESP_LOGW(TAG, "RMT TX transmit failed: %s", esp_err_to_name(err));
+                LOG_ERROR(TAG, "RMT TX transmit failed: %s", esp_err_to_name(err));
             }
             
             current_buffer_idx = (current_buffer_idx + 1) % 2;
