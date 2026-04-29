@@ -30,5 +30,15 @@ export default defineNuxtConfig({
         }
       }
     }
+  },
+  icon: {
+    fallbackToApi: false,
+    clientBundle: {
+      scan: true,
+      // icons: [
+      //   'lucide:x',
+      //   'lucide:settings',
+      // ]
+    }
   }
 })

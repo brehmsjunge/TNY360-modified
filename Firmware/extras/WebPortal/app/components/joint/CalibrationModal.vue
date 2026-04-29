@@ -4,7 +4,7 @@
             <div class="flex w-full h-full space-x-8">
                 <button class="calib-choice-btn flex flex-col space-y-4 text-center" @click="manualModalOpen = true">
                     <div class="flex space-x-2 items-center">
-                        <UIcon name="i-lucide-settings-2" class="w-8 h-8" />
+                        <UIcon name="lucide:settings-2" class="w-8 h-8" />
                         <p class="text-xl font-semibold"> Manual </p>
                     </div>
                     <p>
@@ -13,7 +13,7 @@
                 </button>
                 <button class="calib-choice-btn flex flex-col space-y-4 text-center" @click="automaticModalOpen = true">
                     <div class="flex space-x-2 items-center">
-                        <UIcon name="i-lucide-bot" class="w-8 h-8" />
+                        <UIcon name="lucide:bot" class="w-8 h-8" />
                         <p class="text-xl font-semibold"> Automatic </p>
                     </div>
                     <p>
@@ -58,8 +58,8 @@
         </template>
         <template #footer>
             <div class="flex w-full justify-between items-center">
-                <UButton label="Cancel" variant="ghost" color="neutral" icon="i-lucide-x" @click="onManualModalCancelClicked" />
-                <UButton :loading="manualModalSaveLoading" label="Save" variant="soft" color="primary" icon="i-lucide-check" trailing @click="onManualModalSaveClicked" />
+                <UButton label="Cancel" variant="ghost" color="neutral" icon="lucide:x" @click="onManualModalCancelClicked" />
+                <UButton :loading="manualModalSaveLoading" label="Save" variant="soft" color="primary" icon="lucide:check" trailing @click="onManualModalSaveClicked" />
             </div>
         </template>
     </UModal>
@@ -81,8 +81,8 @@
         </template>
         <template #footer>
             <div class="flex w-full justify-between items-center">
-                <UButton :disabled="autoModalCancelDisabled" label="Cancel" variant="ghost" color="neutral" icon="i-lucide-x" @click="onAutoModalCancelClicked" />
-                <UButton :disabled="autoModalDoneDisabled" label="Done" variant="soft" color="primary" icon="i-lucide-check" trailing @click="onAutoModalDoneClicked" />
+                <UButton :disabled="autoModalCancelDisabled" label="Cancel" variant="ghost" color="neutral" icon="lucide:x" @click="onAutoModalCancelClicked" />
+                <UButton :disabled="autoModalDoneDisabled" label="Done" variant="soft" color="primary" icon="lucide:check" trailing @click="onAutoModalDoneClicked" />
             </div>
         </template>
     </UModal>
