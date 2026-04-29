@@ -22,78 +22,64 @@ MenuList::MenuList(const char* title, Menu* parent, const uint8_t icon[8])
 {
 }
 
-MenuList::MenuList(const char* title, Menu* parent, Menu** items, uint8_t item_count)
-    : Menu(title, parent)
+MenuList::MenuList(const char* title, Menu* parent, const uint8_t icon[8], std::vector<Menu*> items)
+    : Menu(title, parent, icon)
 {
-    setItems(items, item_count);
+    setItems(items);
 }
 
-MenuList::~MenuList()
+void MenuList::setItems(std::vector<Menu*> items)
 {
-    if (m_items)
-    {
-        delete[] m_items;
-    }
-}
-
-void MenuList::setItems(Menu** items, uint8_t item_count)
-{
-    if (m_items)
-    {
-        delete[] m_items;
-    }
-
     m_items = items;
-    m_item_count = item_count;
 }
 
-void MenuList::onBack()
+bool MenuList::onBack()
 {
-    if (parent)
-    {
-        Menus::SetCurrentMenu(parent);
-        m_need_render = true;
-    }
+    return false;
 }
 
-void MenuList::onSelect()
+bool MenuList::onSelect()
 {
-    if (m_selected_index < m_item_count)
+    if (m_selected_index < m_items.size())
     {
         Menus::SetCurrentMenu(m_items[m_selected_index]);
-        m_need_render = true;
-
-        // trick : set to negative shift to make it slide back when going back
-        m_title_shift = -Menus::Menu::HEADER_TITLE_ANIMATION_SHIFT;
     }
+    return true;
 }
 
-void MenuList::onNext()
+bool MenuList::onNext()
 {
-    if (m_selected_index < m_item_count - 1)
+    if (m_selected_index < m_items.size() - 1)
     {
         m_selected_index++;
         m_selected_shift = MENU_LIST_ITEM_DEFAULT_SHIFT;
     }
+    return true;
 }
 
-void MenuList::onPrev()
+bool MenuList::onPrev()
 {
     if (m_selected_index > 0)
     {
         m_selected_index--;
         m_selected_shift = MENU_LIST_ITEM_DEFAULT_SHIFT;
     }
+    return true;
 }
 
-void MenuList::onCreate()
+void MenuList::onShow()
+{
+    m_selected_index_current = 0;
+    m_selected_index = 0;
+    m_view_shift_current = 0;
+}
+
+void MenuList::onHide()
 {
 }
 
 void MenuList::onRender()
 {
-    ScreenDriver::Clear();
-
     if (m_selected_shift < MENU_LIST_ITEM_SELECTED_SHIFT) m_selected_shift += 1;
 
     m_view_shift_current += (m_selected_index - m_view_shift_current) * 0.25f;
@@ -101,27 +87,27 @@ void MenuList::onRender()
 
     const uint8_t text_height = 8;
     const uint8_t padding = 4;
-    const uint8_t item_height = text_height + padding * 2;
+    const uint8_t item_height = text_height + padding * 2 + 1;
 
     int16_t y_select_pos = ScreenDriver::info.height / 2 + (m_selected_index_current - m_view_shift_current) * item_height;
-    Draw::RectFilled(0, y_select_pos - item_height / 2, ScreenDriver::info.width, item_height, ScreenDriver::COLOR_WHITE);
+    Draw::RectRounded<true>(0, y_select_pos - item_height / 2, ScreenDriver::info.width, item_height, 4, ScreenDriver::COLOR_WHITE);
+    Draw::RectRounded<true>(1, y_select_pos - item_height / 2 + 1, ScreenDriver::info.width-3, item_height-3, 2, ScreenDriver::COLOR_BLACK);
     
-    for (uint8_t i = 0; i < m_item_count; i++)
+    for (uint8_t i = 0; i < m_items.size(); i++)
     {
         bool selected = (i == m_selected_index);
-        uint8_t x_pos = (selected ? m_selected_shift : MENU_LIST_ITEM_DEFAULT_SHIFT);
-        uint8_t y_pos = ScreenDriver::info.height / 2 + (i - m_view_shift_current) * item_height;
-        Draw::Text<true>(x_pos + 14, y_pos - text_height / 2, m_items[i]->getTitle(), selected ? ScreenDriver::COLOR_BLACK : ScreenDriver::COLOR_WHITE);
+        int x_pos = (selected ? m_selected_shift : MENU_LIST_ITEM_DEFAULT_SHIFT);
+        int y_pos = ScreenDriver::info.height / 2 + (i - m_view_shift_current) * item_height;
+        if (y_pos < 0) continue;
+        Draw::Text<true>(x_pos + 14, y_pos - text_height / 2, m_items[i]->getTitle());
         Draw::RectRounded<true>(x_pos - 2, y_pos - 6, 12, 12, 2, ScreenDriver::COLOR_BLACK);
         Draw::Blit<true>(x_pos, y_pos - 4, 8, 8, (uint8_t*)m_items[i]->getIcon(), ScreenDriver::COLOR_WHITE, true);
     }
-
+    
     renderHeader();
-
-    ScreenDriver::Upload();
 }
 
 void MenuList::onUpdate()
 {
-    m_need_render = true; // always render (for smooth animations)
+    triggerRender();
 }

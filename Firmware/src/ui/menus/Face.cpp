@@ -7,8 +7,9 @@
 
 constexpr uint8_t EYES_SIZE = 30;
 
-FaceMenu::FaceMenu()
-    : Menu()
+MenuFace::MenuFace()
+    : Menu("Face"),
+    menuMain(MenuMain(this))
 {
     // set defaut eyes info (open looking forward)
     eyes_info.look_x = 0.0f;
@@ -28,51 +29,46 @@ FaceMenu::FaceMenu()
     setBehavior(Behavior_Idle);
 }
 
-FaceMenu::~FaceMenu()
+MenuFace::~MenuFace()
 {
 }
 
-void FaceMenu::setMainMenu(Menu* main_menu)
-{
-    parent = main_menu; // note : using Menu::parent as pointer on main menu
-}
-
-void FaceMenu::setBehavior(BehaviorFunction behavior)
+void MenuFace::setBehavior(BehaviorFunction behavior)
 {
     m_behavior = behavior;
 }
 
-void FaceMenu::onBack()
+bool MenuFace::onBack()
 {
-    if (parent) // note : using Menu::parent as pointer on main menu
-    {
-        Menus::SetCurrentMenu(parent);
-        m_need_render = true;
-    }
+    Menus::SetCurrentMenu(&menuMain);
+    return true;
 }
 
-void FaceMenu::onSelect()
+bool MenuFace::onSelect()
 {
-    if (parent) // note : using Menu::parent as pointer on main menu
-    {
-        Menus::SetCurrentMenu(parent);
-        m_need_render = true;
-    }
+    Menus::SetCurrentMenu(&menuMain);
+    return true;
 }
 
-void FaceMenu::onNext()
+bool MenuFace::onNext()
 {
+    return false;
 }
 
-void FaceMenu::onPrev()
+bool MenuFace::onPrev()
 {
+    return false;
 }
 
-void FaceMenu::onCreate()
+void MenuFace::onShow()
 {
 }
 
-void FaceMenu::onRender()
+void MenuFace::onHide()
+{
+}
+
+void MenuFace::onRender()
 {
     // Note : doing update here not to use power if not rendering
 
@@ -88,7 +84,6 @@ void FaceMenu::onRender()
     float look_x_right = -(-base_infos.look_x*2 - base_infos.look_x*base_infos.look_x);
     float look_x_left = base_infos.look_x*2 - base_infos.look_x*base_infos.look_x;
     
-    ScreenDriver::Clear();
     Draw::RectRounded( // right eye white
         ScreenDriver::info.width / 4  + look_x_right * 10.0f - m_eyes_size / 2,
         ScreenDriver::info.height / 2 + base_infos.look_y * 10.0f - (m_eyes_size * base_infos.open_right) / 2 - base_infos.skew * 5.0f,
@@ -160,13 +155,11 @@ void FaceMenu::onRender()
         ScreenDriver::info.height / 2    + base_infos.look_y * 10.0f + (m_eyes_size * base_infos.open_left) / 2 + base_infos.skew * 5.0f - (base_infos.lid_bottom_left * m_eyes_size * base_infos.open_left),
         ScreenDriver::COLOR_BLACK
     );
-
-    ScreenDriver::Upload();
 }
 
-void FaceMenu::onUpdate()
+void MenuFace::onUpdate()
 {
-    m_need_render = true; // always need render to update eyes
+    triggerRender(); // always need render to update eyes
 }
 
 

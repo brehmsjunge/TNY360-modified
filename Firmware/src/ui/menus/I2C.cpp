@@ -1,71 +1,60 @@
 #include "ui/menus/I2C.hpp"
 #include "ui/Draw.hpp"
+#include "ui/Icons.hpp"
 #include "common/config.hpp"
 #include "common/I2C.hpp"
 #include <cmath>
 
-MenuI2C::MenuI2C()
-    : Menu()
+MenuI2C::MenuI2C(Menu* parent)
+    : Menu("I2C Scan", parent, Icons::I2CMenu)
 {
 }
 
-MenuI2C::MenuI2C(const char* title)
-    : Menu(title)
-{
-}
-
-MenuI2C::MenuI2C(const char* title, Menu* parent)
-    : Menu(title, parent)
-{
-}
-
-MenuI2C::MenuI2C(const char* title, Menu* parent, const uint8_t icon[8])
-    : Menu(title, parent, icon)
-{
-}
-
-MenuI2C::~MenuI2C()
-{
-}
-
-void MenuI2C::onBack()
+bool MenuI2C::onBack()
 {
     if (parent)
     {
         Menus::SetCurrentMenu(parent);
-        m_need_render = true;
+        triggerRender();
     }
+    return true;
 }
 
-void MenuI2C::onSelect()
+bool MenuI2C::onSelect()
 {
-    m_need_render = true;
+    triggerRender();
     startScan();
+    return true;
 }
 
-void MenuI2C::onNext()
-{
-    m_i2c_bus_select = (m_i2c_bus_select + 1) % 2;
-    m_need_render = true;
-    startScan();
-}
-
-void MenuI2C::onPrev()
+bool MenuI2C::onNext()
 {
     m_i2c_bus_select = (m_i2c_bus_select + 1) % 2;
-    m_need_render = true;
+    triggerRender();
+    startScan();
+    return true;
+}
+
+bool MenuI2C::onPrev()
+{
+    m_i2c_bus_select = (m_i2c_bus_select + 1) % 2;
+    triggerRender();
+    startScan();
+    return true;
+}
+
+void MenuI2C::onShow()
+{
     startScan();
 }
 
-void MenuI2C::onCreate()
+void MenuI2C::onHide()
 {
-    startScan();
+    m_scanning = false;
 }
 
 void MenuI2C::onRender()
 {
-    ScreenDriver::Clear();
-
     char i2c_bus_str[32];
     sprintf(i2c_bus_str, "Bus: %s", m_i2c_bus_select ? "Primary" : "Secondary");
     Draw::Text<true>(2, Menu::HEADER_HEIGHT + 4, i2c_bus_str, ScreenDriver::COLOR_WHITE);
@@ -73,7 +62,7 @@ void MenuI2C::onRender()
     char i2c_scanning[32];
     if (m_scanning)
     {
-        sprintf(i2c_scanning, "Scanning %3d/255", m_addr_scan);
+        sprintf(i2c_scanning, "Scanning %3d/128", m_addr_scan);
     }
     else
     {
@@ -94,15 +83,13 @@ void MenuI2C::onRender()
     }
 
     renderHeader();
-
-    ScreenDriver::Upload();
 }
 
 void MenuI2C::onUpdate()
 {
     if (m_scanning)
     {
-        m_need_render = true;
+        triggerRender();
         if (m_addr_scan > 127)
         {
             m_scanning = false;

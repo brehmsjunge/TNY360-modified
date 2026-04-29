@@ -1,7 +1,8 @@
 #pragma once
 #include "ui/Menus.hpp"
+#include "ui/menus/Main.hpp"
 
-typedef struct FaceEyesInfo
+struct FaceEyesInfo
 {
     float look_x;
     float look_y;
@@ -15,33 +16,35 @@ typedef struct FaceEyesInfo
     float lid_out_right;
     float lid_bottom_left;
     float lid_bottom_right;
-} FaceEyesInfo;
+};
 
 using BehaviorFunction = void(*)(FaceEyesInfo& eyes_info, uint32_t time_ms);
 
-class FaceMenu : public Menus::Menu
+class MenuFace : public Menus::Menu
 {
 public:
     FaceEyesInfo eyes_info;
 
-    FaceMenu();
-    virtual ~FaceMenu();
+    MenuFace();
+    virtual ~MenuFace();
 
-    void setMainMenu(Menu* main_menu);
     void setBehavior(BehaviorFunction behavior);
 
 protected:
-    virtual void onBack() override;
-    virtual void onSelect() override;
-    virtual void onNext() override;
-    virtual void onPrev() override;
+    virtual bool onBack() override;
+    virtual bool onSelect() override;
+    virtual bool onNext() override;
+    virtual bool onPrev() override;
 
-    virtual void onCreate() override;
+    virtual void onShow() override;
+    virtual void onHide() override;
     virtual void onRender() override;
     virtual void onUpdate() override;
 
 private:
     BehaviorFunction m_behavior = nullptr;
+
+    MenuMain menuMain;
 };
 
 void Behavior_Idle(FaceEyesInfo& eyes_info, uint32_t time_ms);
