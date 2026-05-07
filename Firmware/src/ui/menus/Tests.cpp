@@ -3,9 +3,11 @@
 
 MenuTests::MenuTests(Menu* parent)
     : MenuList("Tests", parent, Icons::TestsMenu),
-    menuI2C(MenuI2C(this))
+    menuI2C(MenuI2C(this)), menuIMU(MenuIMU(this)), menuSound(MenuSound(this))
 {
     setItems({
-        &menuI2C
+        &menuI2C,
+        &menuIMU,
+        &menuSound
     });
 }

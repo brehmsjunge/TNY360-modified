@@ -24,11 +24,12 @@ Error Speaker::init()
 
     // Config PDM TX
     i2s_pdm_tx_config_t pdm_tx_cfg = {
-        .clk_cfg = I2S_PDM_TX_CLK_DEFAULT_CONFIG(SPEAKER_SAMPLE_RATE_HZ),
+        .clk_cfg = I2S_PDM_TX_CLK_DEFAULT_CONFIG(20'000),
         .slot_cfg = I2S_PDM_TX_SLOT_DEFAULT_CONFIG(I2S_DATA_BIT_WIDTH_16BIT, I2S_SLOT_MODE_MONO),
         .gpio_cfg = {
             .clk = GPIO_NUM_NC, // No need
             .dout = SPEAKER_GPIO_NUM, // Data sound out
+            .dout2 = GPIO_NUM_NC, // No need
             .invert_flags = {
                 .clk_inv = 0,
             },

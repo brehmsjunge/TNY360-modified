@@ -4,7 +4,7 @@
 #include "ui/Draw.hpp"
 #include "Robot.hpp"
 
-#include "qrcodegen.h"
+#include "qrcodegen.hpp"
 
 MenuWiFi::MenuWiFi(Menu* parent)
     : Menu("WiFi", parent, Icons::WiFiMenu)
