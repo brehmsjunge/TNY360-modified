@@ -79,10 +79,10 @@ Error ControlLoop::init()
         .clk_src = GPTIMER_CLK_SRC_DEFAULT,
         .direction = GPTIMER_COUNT_UP,
         .resolution_hz = TIMER_RESOLUTION,
-        .intr_priority = 5, // Set a medium priority (high priority but still keeping some room for critical tasks)
+        .intr_priority = 0, // Let driver choose a low priority
         .flags = {
             .intr_shared = false, // Don't share the interrupt
-            .allow_pd = true, // Allow power down in sleep mode (we don't use it anyways)
+            .allow_pd = false, // Don't allow power down
         },
     };
     if (esp_err_t err = gptimer_new_timer(&timer_config, &timer); err != ESP_OK)

@@ -56,7 +56,7 @@ namespace LED
             .flags = {
                 .invert_out = false, // WS2812 data is not inverted
                 .with_dma = false, // DMA would be overkill
-                .allow_pd = true, // Allow power down in sleep mode (we don't use it anyways)
+                .allow_pd = false, // Don't allow power down
                 .init_level = 0 // Start with low level
             }
         };

@@ -121,8 +121,6 @@ Error Joint::estimateState(float dt)
 
 Error Joint::applyCommand(float joint_angle_rad, float dt)
 {
-    LOG_DEBUG(TAG, "JOINT %d - Apply %+06.1f deg", id, RAD_TO_DEG(joint_angle_rad));
-
     if (joint_angle_rad < min_angle_rad || joint_angle_rad > max_angle_rad)
     {
         LOG_ERROR(TAG, "JOINT %d - Requested target angle %.2f rad is out of bounds (%.2f - %.2f rad)", id, joint_angle_rad, min_angle_rad, max_angle_rad);

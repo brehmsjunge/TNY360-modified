@@ -21,7 +21,7 @@ Error Robot::init()
     }
 
     // Set yellow color (init color)
-    LED::SetColor(0, LED::Color(16, 16, 0), 0.5f);
+    LED::SetColor(0, LED::Color(16, 16, 0), 0.1f);
 
     if (Error err = ui_manager.init(); err != Error::None)
     {
@@ -56,7 +56,7 @@ Error Robot::init()
     }
 
     // all good, turn orange for startup
-    LED::SetColor(0, LED::Color(16, 8, 0), 0.5f);
+    LED::SetColor(0, LED::Color(16, 8, 0), 0.1f);
 
     return Error::None;
 }
@@ -81,7 +81,7 @@ Error Robot::start()
     vTaskDelay(pdMS_TO_TICKS(500));
 
     // robot is ready ! Turn green (low intensity to avoid using power for nothing)
-    LED::SetColor(0, LED::Color(0, 8, 0), 0.5f);
+    LED::SetColor(0, LED::Color(0, 8, 0), 0.1f);
 
     // Set the menu to face (face only displays when everything is working)
     Menus::SetCurrentMenu(Menus::GetMenuFace());
