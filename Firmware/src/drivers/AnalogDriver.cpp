@@ -146,7 +146,7 @@ namespace AnalogDriver
         for (int i = 0; i < CHANNEL_COUNT; i++)
         {
             select(i);
-            esp_rom_delay_us(5); 
+            esp_rom_delay_us(5);
             Value raw_value;
             if (adc_oneshot_read(adc_handle, ADC_CHANNEL_1, &raw_value) == ESP_OK)
             {

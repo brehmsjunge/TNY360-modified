@@ -85,7 +85,7 @@ namespace IMUDriver
         return Error::None;
     }
 
-    inline IMUData& GetData()
+    IMUData& GetData()
     {
         return imu_data;
     }

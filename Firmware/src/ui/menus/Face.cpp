@@ -7,17 +7,20 @@
 
 constexpr uint8_t EYES_SIZE = 30;
 
+MenuFace* MenuFace::instance = nullptr;
+
 MenuFace::MenuFace()
-    : Menu("Face"),
-    menuMain(MenuMain(this))
+    : Menu("Face"), menuMain(MenuMain(this))
 {
+    instance = this;
+
     // set defaut eyes info (open looking forward)
     eyes_info.look_x = 0.0f;
     eyes_info.look_y = 0.0f;
     eyes_info.skew = 0.0f;
     eyes_info.size = 1.0f;
-    eyes_info.open_left = 0.8f;
-    eyes_info.open_right = 0.8f;
+    eyes_info.open_left = 1.2f;
+    eyes_info.open_right = 1.2f;
     eyes_info.lid_in_left = 0.0f;
     eyes_info.lid_in_right = 0.0f;
     eyes_info.lid_out_left = 0.0f;
@@ -176,7 +179,7 @@ float last_look_y_shift = 0.0f;
 float look_x_shift = 0.0f;
 float look_y_shift = 0.0f;
 
-void Behavior_Idle(FaceEyesInfo& eyes_info, uint32_t time_ms)
+void Behavior_Blink(FaceEyesInfo& eyes_info, uint32_t time_ms)
 {
     // Blink every 3 to 7 seconds
     if (!is_blinking && (time_ms - last_blink_time) > blink_wait_time)
@@ -213,6 +216,11 @@ void Behavior_Idle(FaceEyesInfo& eyes_info, uint32_t time_ms)
             }
         }
     }
+}
+
+void Behavior_Idle(FaceEyesInfo& eyes_info, uint32_t time_ms)
+{
+    Behavior_Blink(eyes_info, time_ms); // also apply blinking in idle behavior
 
     // Move eyes every 1 to 5 seconds
     if ((time_ms - last_look_move) > look_move_wait_time)

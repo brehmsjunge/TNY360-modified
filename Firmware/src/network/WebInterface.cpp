@@ -61,7 +61,10 @@ void WebInterface::registerURIHandlers()
         .uri       = "/*", // Wildcard
         .method    = HTTP_GET,
         .handler   = main_request_handler,
-        .user_ctx  = this
+        .user_ctx  = this,
+        .is_websocket = false,
+        .handle_ws_control_frames = false,
+        .supported_subprotocol = nullptr,
     };
     httpd_register_uri_handler(server, &catch_all_uri);
 

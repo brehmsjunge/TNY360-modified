@@ -23,7 +23,13 @@ namespace LED
 
     static rmt_channel_handle_t rmt_tx_channel = NULL;
     static rmt_encoder_handle_t rmt_bytes_encoder = NULL;
-    static rmt_transmit_config_t transmit_config = { .loop_count = 0 }; // Transmit once by default
+    static rmt_transmit_config_t transmit_config = {
+        .loop_count = 0, // Transmit once by default
+        .flags = {
+            .eot_level = 0, // Level low after transmission
+            .queue_nonblocking = 0 // Block if queue is full
+        }
+    };
 
     static uint8_t rmt_buffer[2][LED_COUNT * 3] = {0}; 
     static int current_buffer_idx = 0;
@@ -46,8 +52,12 @@ namespace LED
                                     // Set to a value >= (bytes_to_transmit * 8) if you want to ensure one transaction.
                                     // Or let driver manage it.
             .trans_queue_depth = 2, // Allows queuing of transactions
+            .intr_priority = 0, // Let driver choose a low priority
             .flags = {
                 .invert_out = false, // WS2812 data is not inverted
+                .with_dma = false, // DMA would be overkill
+                .allow_pd = true, // Allow power down in sleep mode (we don't use it anyways)
+                .init_level = 0 // Start with low level
             }
         };
 

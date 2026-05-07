@@ -8,7 +8,7 @@
 /** MULTICORE SETUP */
 constexpr int CORE_BRAIN = 0;
 constexpr int CORE_REFLEX = 1;
-// number of milliseconds before triggering security stop (in case brain core crashes to clear control intent)
+// number of milliseconds before triggering security stop (in case brain core crashes, to clear control intent)
 constexpr uint32_t CONTROL_INTENT_WATCHDOG_MS = 500;
 
 /** OTA SETUP **/
@@ -20,23 +20,23 @@ constexpr const char* OTA_ROBOT_MODEL = "tny-360";
 
 
 /** PHYSICAL INFORMATIONS **/
-constexpr float LEG_THIGH_LENGTH_M = 0.100f; // in m
-constexpr float LEG_CALF_LENGTH_M = 0.100f; // in m
-constexpr float HIP_OFFSET_M = 0.030f; // in m
-constexpr float HIP_POS_X_M = 0.075f; // in m
-constexpr float HIP_POS_Y_M = 0.050f; // in m
+constexpr float LEG_THIGH_LENGTH_M = 0.100f; // in meters
+constexpr float LEG_CALF_LENGTH_M = 0.100f; // in meters
+constexpr float HIP_OFFSET_M = 0.036f; // in meters
+constexpr float HIP_POS_X_M = 0.083f; // in meters, from body center
+constexpr float HIP_POS_Y_M = 0.053f; // in meters, from body center
 
 /** DEFAULT POSE INFORMATIONS **/
 constexpr float DEFAULT_BODY_HEIGHT_M   = 0.120f; // in meters, from ground level
-constexpr float DEFAULT_FEET_SPREAD_Y_M = 0.100f; // in meters, from body center
 constexpr float DEFAULT_FEET_SPREAD_X_M = 0.090f; // in meters, from body center
+constexpr float DEFAULT_FEET_SPREAD_Y_M = 0.100f; // in meters, from body center
 
 
 /** LOGGING **/
 // Maximum number of log lines to store
 constexpr int LOG_MAX_LINES = 20;
 // Maximum length of each log message
-constexpr int LOG_MAX_MSG_LEN = 128;
+constexpr int LOG_MAX_MSG_LEN = 256;
 
 /** FILESYSTEM **/
 // Maximum path length for file operations
@@ -84,7 +84,7 @@ constexpr float ANALOG_EMA_ALPHA = 0.5f;
 
 /** Timer management **/
 // Control loop frequency
-constexpr int CONTROL_LOOP_FREQ_HZ = 200; // Hz
+constexpr int CONTROL_LOOP_FREQ_HZ = 50; // Hz
 // Resolution of the control loop timer
 constexpr int TIMER_RESOLUTION = 1'000'000; // 1Mhz, 1 us
 // [][] calculated values below, do not edit manually
@@ -93,21 +93,16 @@ constexpr float CONTROL_LOOP_DT_S = 1.0f / CONTROL_LOOP_FREQ_HZ;
 constexpr int CONTROL_LOOP_DT_MS = static_cast<int>(CONTROL_LOOP_DT_S * 1000);
 
 // Decision loop frequency
-constexpr int DECISION_LOOP_FREQ_HZ = 50; // Hz
+constexpr int DECISION_LOOP_FREQ_HZ = 10; // Hz
 constexpr float DECISION_LOOP_DT_S = 1.0f / DECISION_LOOP_FREQ_HZ;
 constexpr int DECISION_LOOP_DT_MS = static_cast<int>(DECISION_LOOP_DT_S * 1000);
 
 /** Analog scanner **/
 // GPIO pins for the 4-bit multiplexer select lines
-// constexpr gpio_num_t SCANNER_SLCT_PIN1 = GPIO_NUM_39;
-// constexpr gpio_num_t SCANNER_SLCT_PIN2 = GPIO_NUM_40;
-// constexpr gpio_num_t SCANNER_SLCT_PIN3 = GPIO_NUM_41;
-// constexpr gpio_num_t SCANNER_SLCT_PIN4 = GPIO_NUM_42;
-// NOTE : Actually I'm dumb and reversed the pin between the analog card and the brain card ...
-constexpr gpio_num_t SCANNER_SLCT_PIN1 = GPIO_NUM_42;
-constexpr gpio_num_t SCANNER_SLCT_PIN2 = GPIO_NUM_41;
-constexpr gpio_num_t SCANNER_SLCT_PIN3 = GPIO_NUM_40;
-constexpr gpio_num_t SCANNER_SLCT_PIN4 = GPIO_NUM_39;
+constexpr gpio_num_t SCANNER_SLCT_PIN1 = GPIO_NUM_39;
+constexpr gpio_num_t SCANNER_SLCT_PIN2 = GPIO_NUM_40;
+constexpr gpio_num_t SCANNER_SLCT_PIN3 = GPIO_NUM_41;
+constexpr gpio_num_t SCANNER_SLCT_PIN4 = GPIO_NUM_42;
 
 
 /** LEG **/
@@ -131,7 +126,7 @@ constexpr uint8_t MOTOR_DRIVER_I2C_ADDR = 0x40;
 // I2C clock speed for motor driver communication
 constexpr uint32_t MOTOR_DRIVER_I2C_CLOCK = 400'000; // Hz
 // PWM frequency for the motor driver (standard servo frequency)
-constexpr uint16_t MOTOR_DRIVER_PWM_FREQUENCY_HZ = 200; // In Hz.
+constexpr uint16_t MOTOR_DRIVER_PWM_FREQUENCY_HZ = 50; // In Hz.
 // NOTE : Internal robot motor update is driven by the main timer at CONTROL_LOOP_FREQ_HZ
 
 
@@ -157,5 +152,5 @@ constexpr uint8_t MENU_LIST_ITEM_SELECTED_SHIFT = 8;
 
 /** Speaker **/
 constexpr gpio_num_t SPEAKER_GPIO_NUM = GPIO_NUM_1;
-constexpr int SPEAKER_SAMPLE_RATE_HZ = 44100; // in Hz
+constexpr int SPEAKER_SAMPLE_RATE_HZ = 22'500; // in Hz
 constexpr size_t SPEAKER_NB_AUDIO_PROVIDERS = 4; // number of stacked audio providers

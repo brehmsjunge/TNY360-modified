@@ -21,9 +21,9 @@ public:
         /// @brief Duty factor (portion of the gait cycle spent in stance)
         float duty_factor = 0.60f;
         /// @brief Step height in meters
-        float step_height_mm = 0.02f;
+        float step_height_m = 0.02f;
         /// @brief Distance pushed by feets into the ground in meters
-        float stance_depth_mm = 0.0f;
+        float stance_depth_m = 0.0f;
         /// @brief Type of gait to base the movements of
         GaitType gait_type = GaitType::Walk;
     };
@@ -44,11 +44,11 @@ public:
 
     /**
      * @brief Set the desired velocity command for the robot
-     * @param v_x Linear velocity in the x direction (mm/s)
-     * @param v_y Linear velocity in the y direction (mm/s)
-     * @param omega Angular velocity around the vertical axis (rad/s)
+     * @param x_ms Linear velocity in the x direction (m/s)
+     * @param y_ms Linear velocity in the y direction (m/s)
+     * @param z_rads Angular velocity around the vertical axis (rad/s)
      */
-    void setVelocityCommand(float v_x_mm_s, float v_y_mm_s, float omega_rad_s);
+    void setVelocityCommand(float x_ms, float y_ms, float z_rads);
 
     /**
      * @brief Set the gait configuration parameters

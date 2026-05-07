@@ -9,18 +9,21 @@ class Leg
 public:
     constexpr static const char* TAG = "Leg";
 
-    /// @brief Leg index enum
-    enum class Index {
-        /// @brief  Front Left Leg
-        FRONT_LEFT = 0,
-        /// @brief  Front Right Leg
-        FRONT_RIGHT = 1,
-        /// @brief  Back Left Leg
-        BACK_LEFT = 2,
-        /// @brief  Back Right Leg
-        BACK_RIGHT = 3,
-        /// @brief  Total number of legs in the body
-        COUNT = 4
+    enum class Id : uint8_t
+    {
+        FrontLeft = 0,
+        BackLeft = 1,
+        BackRight = 2,
+        FrontRight = 3,
+        Count = 4
+    };
+
+    enum class JointId : uint8_t
+    {
+        HipRoll = 0,
+        HipPitch = 1,
+        KneePitch = 2,
+        Count = 3
     };
 
     Leg();
@@ -66,22 +69,32 @@ public:
     Error disable();
 
     /**
+     * @brief Get a joint of the leg by its ID (see JointId).
+     * @param id The ID of the joint to retrieve.
+     * @return Reference to the specified joint.
+     */
+    inline Joint& getJoint(JointId id)
+    {
+        return joints[(int)id];
+    }
+
+    /**
      * @brief Get the hip roll joint.
      * @return Reference to the hip roll Joint.
      */
-    inline Joint& getHipRoll() { return hip_roll; }
+    inline Joint& getHipRoll() { return joints[(int)JointId::HipRoll]; }
 
     /**
      * @brief Get the hip pitch joint.
      * @return Reference to the hip pitch Joint.
      */
-    inline Joint& getHipPitch() { return hip_pitch; }
+    inline Joint& getHipPitch() { return joints[(int)JointId::HipPitch]; }
 
     /**
      * @brief Get the knee pitch joint.
      * @return Reference to the knee pitch Joint.
      */
-    inline Joint& getKneePitch() { return knee_pitch; }
+    inline Joint& getKneePitch() { return joints[(int)JointId::KneePitch]; }
 
     /**
      * @brief Get if the leg is inverted along the y axis
@@ -96,9 +109,7 @@ public:
     inline bool isGrounded() { return grounded; }
 
 private:
-    Joint hip_roll;
-    Joint hip_pitch;
-    Joint knee_pitch;
+    Joint joints[(int)JointId::Count];
     AnalogDriver::Channel contact_channel;
     bool y_inverted;
 

@@ -40,18 +40,14 @@ class CartesianStateModifier
 /// @brief Stores all the rotation of each motors of a leg
 struct LegJointState
 {
-    /// @brief Hip roll (x) motor
-    float hipRoll_rad;
-    /// @brief Hip pitch (y) motor
-    float hipPitch_rad;
-    /// @brief Knee pitch (y) motor
-    float kneePitch_rad;
+    /// @brief Joint angles (Hip Roll, Hip Pitch, Knee Pitch order)
+    float joint_angles_rad[3];
 };
 
 /// @brief Stores all the rotation of each body joint
 struct BodyJointState
 {
-    /// @brief Leg joints (FL, FR, BL, BR)
+    /// @brief Leg joints (FL, BL, BR, FR order)
     LegJointState leg_joints[4];
 
     /// @brief Left ear joint for animations

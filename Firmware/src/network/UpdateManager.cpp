@@ -5,7 +5,7 @@
 #include "esp_ota_ops.h"
 #include "common/Log.hpp"
 #include "common/config.hpp"
-#include "cJSON.h"
+#include "ArduinoJson.hpp"
 
 // Code-embeded root CA certificate (PEM format)
 extern const uint8_t root_ca_pem_start[] asm("_binary_root_ca_pem_start");
@@ -140,41 +140,47 @@ void UpdateManager::run_update_task()
     {
         buffer[read_len] = 0; // Null terminate for safety
         
-        cJSON *json = cJSON_Parse(buffer);
-        if (json)
+        ArduinoJson::JsonDocument json;
+        ArduinoJson::DeserializationError err = ArduinoJson::deserializeJson(json, buffer);
+        if (err != ArduinoJson::DeserializationError::Ok)
         {
-            cJSON *ver = cJSON_GetObjectItem(json, "version");
-            cJSON *fw_url = cJSON_GetObjectItem(json, "firmwareDownloadUrl");
-            cJSON *fs_url = cJSON_GetObjectItem(json, "filesystemDownloadUrl");
+            LOG_ERROR(TAG, "Failed to parse JSON response: %s", err.c_str());
+            status = Status::ErrorInvalidJson;
+            return;
+        }
 
-            // copy in member variables
-            latestVersion = ver && ver->valuestring ? strdup(ver->valuestring) : nullptr;
-            firmwareDownloadUrl = fw_url && fw_url->valuestring ? strdup(fw_url->valuestring) : nullptr;
-            filesystemDownloadUrl = fs_url && fs_url->valuestring ? strdup(fs_url->valuestring) : nullptr;
+        const char *ver = json["version"];
+        const char *fw_url = json["firmwareDownloadUrl"];
+        const char *fs_url = json["filesystemDownloadUrl"];
 
-            if (ver && fw_url && fs_url)
+        // copy in member variables
+        latestVersion = ver && ver[0] ? strdup(ver) : nullptr;
+        firmwareDownloadUrl = fw_url && fw_url[0] ? strdup(fw_url) : nullptr;
+        filesystemDownloadUrl = fs_url && fs_url[0] ? strdup(fs_url) : nullptr;
+
+        if (ver && fw_url && fs_url)
+        {
+            LOG_DEBUG(TAG, "Comparing version strings: %s vs %s", ver, FIRMWARE_VERSION);
+            if (strcmp(ver, FIRMWARE_VERSION) != 0)
             {
-                LOG_DEBUG(TAG, "Comparing version strings: %s vs %s", ver->valuestring, FIRMWARE_VERSION);
-                if (strcmp(ver->valuestring, FIRMWARE_VERSION) != 0)
-                {
-                    LOG_DEBUG(TAG, "New version found: %s", ver->valuestring);
-                    updateAvailable = true;
-                    // NOTE : Not launching update here, just marking it as available
-                    // It will be triggered by the user if desired
-                }
-                else
-                {
-                    LOG_DEBUG(TAG, "System is up to date.");
-                    updateAvailable = false;
-                }
-                status = Status::Done;
+                LOG_DEBUG(TAG, "New version found: %s", ver);
+                updateAvailable = true;
+                // NOTE : Not launching update here, just marking it as available
+                // It will be triggered by the user if desired
             }
             else
             {
-                status = Status::ErrorInvalidJson;
+                LOG_DEBUG(TAG, "System is up to date.");
+                updateAvailable = false;
             }
-            cJSON_Delete(json);
+            status = Status::Done;
         }
+        else
+        {
+            LOG_ERROR(TAG, "API response returned an invalid JSON.");
+            status = Status::ErrorInvalidJson;
+        }
+        json.clear();
     }
     else
     {

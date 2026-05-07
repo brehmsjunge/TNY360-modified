@@ -18,6 +18,10 @@ enum class Error: uint8_t {
     OutOfMemory
 };
 
+// Helper macro to return early on error. Usage:
+// RETURN_ERROR(SomeFunction());
+#define RETURN_ERROR(x) if (Error err = (x); err != Error::None) return err;
+
 const char* ErrorToString(Error err);
 
 struct ErrorStruct

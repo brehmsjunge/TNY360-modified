@@ -7,9 +7,9 @@ GaitPlanner::GaitPlanner()
 {
     // set default leg positions (relative to ground)
     leg_default_pos[0] = Vec3f( WALK_LEG_SPREAD_X_M,  WALK_LEG_SPREAD_Y_M, 0.f); // FL
-    leg_default_pos[1] = Vec3f( WALK_LEG_SPREAD_X_M, -WALK_LEG_SPREAD_Y_M, 0.f); // FR
-    leg_default_pos[2] = Vec3f(-WALK_LEG_SPREAD_X_M,  WALK_LEG_SPREAD_Y_M, 0.f); // BL
-    leg_default_pos[3] = Vec3f(-WALK_LEG_SPREAD_X_M, -WALK_LEG_SPREAD_Y_M, 0.f); // BR
+    leg_default_pos[1] = Vec3f(-WALK_LEG_SPREAD_X_M,  WALK_LEG_SPREAD_Y_M, 0.f); // BL
+    leg_default_pos[2] = Vec3f(-WALK_LEG_SPREAD_X_M, -WALK_LEG_SPREAD_Y_M, 0.f); // BR
+    leg_default_pos[3] = Vec3f( WALK_LEG_SPREAD_X_M, -WALK_LEG_SPREAD_Y_M, 0.f); // FR
 
     setGaitConfig(GaitConfig()); // default config
 }
@@ -21,11 +21,11 @@ GaitPlanner::GaitPlanner(GaitConfig config) : gait_config(config)
     setGaitConfig(config);
 }
 
-void GaitPlanner::setVelocityCommand(float v_x, float v_y, float omega)
+void GaitPlanner::setVelocityCommand(float x_ms, float y_ms, float z_rads)
 {
     // Store the velocity command for use in the update loop
-    cmd_vel_linear = Vec2f(v_x, v_y);
-    cmd_vel_angular = omega;
+    cmd_vel_linear = Vec2f(x_ms, y_ms);
+    cmd_vel_angular = z_rads;
 }
 
 void GaitPlanner::setGaitConfig(const GaitConfig& config)
@@ -41,7 +41,7 @@ Error GaitPlanner::update(float dt, BodyCartesianState& state)
         if (is_moving) // just stopped, reset legs
         {
             is_moving = false;
-            LOG_INFO(TAG, "Just stopped. Resetting legs");
+            LOG_DEBUG(TAG, "Just stopped. Resetting legs");
         }
 
         for (int i = 0; i < 4; i++) {
@@ -56,7 +56,7 @@ Error GaitPlanner::update(float dt, BodyCartesianState& state)
     {
         main_gait_phase = 0.0f;
         is_moving = true;
-        LOG_INFO(TAG, "Started moving.");
+        LOG_DEBUG(TAG, "Started moving.");
     }
 
     // Advance the main gait phase
@@ -104,7 +104,7 @@ Error GaitPlanner::update(float dt, BodyCartesianState& state)
 
             state.legs[i].target_pos.x = start.x + (end.x - start.x) * smooth_t;
             state.legs[i].target_pos.y = start.y + (end.y - start.y) * smooth_t;
-            state.legs[i].target_pos.z = gait_config.step_height_mm * sinf(PI * t_swing); // simple sine for vertical lift
+            state.legs[i].target_pos.z = gait_config.step_height_m * sinf(PI * t_swing); // simple sine for vertical lift
         }
         else // STANCE PHASE (On the ground)
         {
@@ -114,7 +114,7 @@ Error GaitPlanner::update(float dt, BodyCartesianState& state)
             state.legs[i].target_pos = leg_default_pos[i];
             state.legs[i].target_pos.x += stance_dist.x * (0.5f - t_stance); 
             state.legs[i].target_pos.y += stance_dist.y * (0.5f - t_stance);
-            state.legs[i].target_pos.z = -gait_config.stance_depth_mm;
+            state.legs[i].target_pos.z = -gait_config.stance_depth_m;
         }
     }
 
@@ -128,27 +128,27 @@ void GaitPlanner::apply_gait_offsets()
     {
         case GaitType::Walk: // Basic walk, Front Left with Back Right
             leg_phase_offsets[0] = 0.0f; // FL
-            leg_phase_offsets[1] = 0.5f; // FR
-            leg_phase_offsets[2] = 0.5f; // BL
-            leg_phase_offsets[3] = 0.0f; // BR
+            leg_phase_offsets[1] = 0.5f; // BL
+            leg_phase_offsets[2] = 0.0f; // BR
+            leg_phase_offsets[3] = 0.5f; // FR
             break;
         case GaitType::Creep: // Slow walking (note : duty factor should be > 0.75)
             leg_phase_offsets[0] = 0.00f; // FL
-            leg_phase_offsets[1] = 0.50f; // FR
-            leg_phase_offsets[2] = 0.25f; // BL
-            leg_phase_offsets[3] = 0.75f; // BR
+            leg_phase_offsets[1] = 0.50f; // BL
+            leg_phase_offsets[2] = 0.25f; // BR
+            leg_phase_offsets[3] = 0.75f; // FR
             if (gait_config.duty_factor < 0.75f)
                 LOG_WARNING(TAG, "GaitType::Creep selected but gait_config.duty_factor is < 0.75f");
             break;
         case GaitType::Run: // Run, front legs together, back legs together
             leg_phase_offsets[0] = 0.0f; // FL
-            leg_phase_offsets[1] = 0.0f; // FR
-            leg_phase_offsets[2] = 0.5f; // BL
-            leg_phase_offsets[3] = 0.5f; // BR
+            leg_phase_offsets[1] = 0.5f; // BL
+            leg_phase_offsets[2] = 0.5f; // BR
+            leg_phase_offsets[3] = 0.0f; // FR
             break;
         default: // default to x pattern (walk)
             leg_phase_offsets[0] = 0.0f; leg_phase_offsets[1] = 0.5f;
-            leg_phase_offsets[2] = 0.5f; leg_phase_offsets[3] = 0.0f;
+            leg_phase_offsets[2] = 0.0f; leg_phase_offsets[3] = 0.5f;
             break;
     }
 }

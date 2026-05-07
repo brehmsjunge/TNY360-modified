@@ -51,35 +51,35 @@ public:
     Error disable();
 
     /**
-     * @brief Get a given leg from its index
-     * @param index The leg index, see Leg::Index.
+     * @brief Get a given leg from its id
+     * @param id The leg id, see Leg::Id.
      * @return Reference to the Leg.
      */
-    inline Leg& getLeg(Leg::Index index) { return legs[static_cast<size_t>(index)]; }
+    inline Leg& getLeg(Leg::Id id) { return legs[static_cast<uint8_t>(id)]; }
 
     /**
      * @brief Get the front left leg.
      * @return Reference to the front left Leg.
      */
-    inline Leg& getFrontLeftLeg() { return legs[static_cast<size_t>(Leg::Index::FRONT_LEFT)]; }
-
-    /**
-     * @brief Get the front right leg.
-     * @return Reference to the front right Leg.
-     */
-    inline Leg& getFrontRightLeg() { return legs[static_cast<size_t>(Leg::Index::FRONT_RIGHT)]; }
+    inline Leg& getFrontLeftLeg() { return legs[static_cast<uint8_t>(Leg::Id::FrontLeft)]; }
 
     /**
      * @brief Get the back left leg.
      * @return Reference to the back left Leg.
      */
-    inline Leg& getBackLeftLeg() { return legs[static_cast<size_t>(Leg::Index::BACK_LEFT)]; }
+    inline Leg& getBackLeftLeg() { return legs[static_cast<uint8_t>(Leg::Id::BackLeft)]; }
 
     /**
      * @brief Get the back right leg.
      * @return Reference to the back right Leg.
      */
-    inline Leg& getBackRightLeg() { return legs[static_cast<size_t>(Leg::Index::BACK_RIGHT)]; }
+    inline Leg& getBackRightLeg() { return legs[static_cast<uint8_t>(Leg::Id::BackRight)]; }
+
+    /**
+     * @brief Get the front right leg.
+     * @return Reference to the front right Leg.
+     */
+    inline Leg& getFrontRightLeg() { return legs[static_cast<uint8_t>(Leg::Id::FrontRight)]; }
 
     /**
      * @brief Get the left ear joint.
@@ -100,7 +100,7 @@ public:
     inline IMU& getIMU() { return imu; }
 
 private:
-    Leg legs[4]; // Array of 4 legs
+    Leg legs[4]; // Array of 4 legs (FL, BL, BR, FR order)
     Joint ear_l; // Left Ear Joint
     Joint ear_r; // Right Ear Joint
 

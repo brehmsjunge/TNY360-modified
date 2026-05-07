@@ -7,34 +7,34 @@
 Body::Body()
 {
     // Create the 4 legs
-    legs[static_cast<size_t>(Leg::Index::FRONT_LEFT)] = Leg(
-        Joint(1, MotorController( 7,  9), DEG_TO_RAD( -45.0f), DEG_TO_RAD( 45.0f), false),  // Hip Roll
-        Joint(2, MotorController( 5, 11), DEG_TO_RAD(-135.0f), DEG_TO_RAD( 45.0f), true ),  // Hip Pitch
-        Joint(3, MotorController( 6, 10), DEG_TO_RAD(   0.0f), DEG_TO_RAD(150.0f), false),  // Knee Pitch
+    legs[static_cast<size_t>(Leg::Id::FrontLeft)] = Leg(
+        Joint(Joint::Id::FrontLeftHipRoll, MotorController( 2,  0), DEG_TO_RAD( -45.0f), DEG_TO_RAD( 45.0f), false),  // Hip Roll
+        Joint(Joint::Id::FrontLeftHipPitch, MotorController( 3,  1), DEG_TO_RAD(-135.0f), DEG_TO_RAD( 45.0f), true ),  // Hip Pitch
+        Joint(Joint::Id::FrontLeftKneePitch, MotorController( 4,  2), DEG_TO_RAD(   0.0f), DEG_TO_RAD(150.0f), false),  // Knee Pitch
         3, true
     );
-    legs[static_cast<size_t>(Leg::Index::FRONT_RIGHT)] = Leg(
-        Joint(4, MotorController( 4, 13), DEG_TO_RAD( -45.0f), DEG_TO_RAD( 45.0f), true ),  // Hip Roll
-        Joint(5, MotorController( 2, 15), DEG_TO_RAD(-135.0f), DEG_TO_RAD( 45.0f), false),  // Hip Pitch
-        Joint(6, MotorController( 3, 14), DEG_TO_RAD(   0.0f), DEG_TO_RAD(150.0f), true ),  // Knee Pitch
-        7, false
+    legs[static_cast<size_t>(Leg::Id::BackLeft)] = Leg(
+        Joint(Joint::Id::BackLeftHipRoll, MotorController( 5,  4), DEG_TO_RAD( -45.0f), DEG_TO_RAD( 45.0f), true ),  // Hip Roll
+        Joint(Joint::Id::BackLeftHipPitch, MotorController( 6,  5), DEG_TO_RAD(-135.0f), DEG_TO_RAD( 45.0f), true ),  // Hip Pitch
+        Joint(Joint::Id::BackLeftKneePitch, MotorController( 7,  6), DEG_TO_RAD(   0.0f), DEG_TO_RAD(150.0f), false),  // Knee Pitch
+        7, true
     );
-    legs[static_cast<size_t>(Leg::Index::BACK_LEFT)] = Leg(
-        Joint(7, MotorController(10,  5), DEG_TO_RAD( -45.0f), DEG_TO_RAD( 45.0f), true ),  // Hip Roll
-        Joint(8, MotorController( 8,  7), DEG_TO_RAD(-135.0f), DEG_TO_RAD( 45.0f), true ),  // Hip Pitch
-        Joint(9, MotorController( 9,  6), DEG_TO_RAD(   0.0f), DEG_TO_RAD(150.0f), false),  // Knee Pitch
-        11, true
+    legs[static_cast<size_t>(Leg::Id::BackRight)] = Leg(
+        Joint(Joint::Id::BackRightHipRoll, MotorController( 8,  8), DEG_TO_RAD( -45.0f), DEG_TO_RAD( 45.0f), false),  // Hip Roll
+        Joint(Joint::Id::BackRightHipPitch, MotorController( 9,  9), DEG_TO_RAD(-135.0f), DEG_TO_RAD( 45.0f), false),  // Hip Pitch
+        Joint(Joint::Id::BackRightKneePitch, MotorController(10,  10), DEG_TO_RAD(   0.0f), DEG_TO_RAD(150.0f), true ),  // Knee Pitch
+        11, false
     );
-    legs[static_cast<size_t>(Leg::Index::BACK_RIGHT)] = Leg(
-        Joint(10, MotorController(13,  1), DEG_TO_RAD( -45.0f), DEG_TO_RAD( 45.0f), false),  // Hip Roll
-        Joint(11, MotorController(11,  3), DEG_TO_RAD(-135.0f), DEG_TO_RAD( 45.0f), false),  // Hip Pitch
-        Joint(12, MotorController(12,  2), DEG_TO_RAD(   0.0f), DEG_TO_RAD(150.0f), true ),  // Knee Pitch
+    legs[static_cast<size_t>(Leg::Id::FrontRight)] = Leg(
+        Joint(Joint::Id::FrontRightHipRoll, MotorController(11, 12), DEG_TO_RAD( -45.0f), DEG_TO_RAD( 45.0f), true ),  // Hip Roll
+        Joint(Joint::Id::FrontRightHipPitch, MotorController(12, 13), DEG_TO_RAD(-135.0f), DEG_TO_RAD( 45.0f), false),  // Hip Pitch
+        Joint(Joint::Id::FrontRightKneePitch, MotorController(13, 14), DEG_TO_RAD(   0.0f), DEG_TO_RAD(150.0f), true ),  // Knee Pitch
         15, false
     );
 
     // Create the ears (default calib is for MG996R, using SG90 for ears)
-    ear_l = Joint(13, MotorController(1, 0, MotorController::DEFAULT_CALIBRATION_SG90), DEG_TO_RAD(0.0f), DEG_TO_RAD(180.0f), true, false);
-    ear_r = Joint(14, MotorController(0, 0, MotorController::DEFAULT_CALIBRATION_SG90), DEG_TO_RAD(0.0f), DEG_TO_RAD(180.0f), false, false);
+    ear_r = Joint(Joint::Id::EarRight, MotorController(0, 0, MotorController::MOTOR_ATTR_SG90), DEG_TO_RAD(0.0f), DEG_TO_RAD(180.0f), false, false);
+    ear_l = Joint(Joint::Id::EarLeft, MotorController(1, 0, MotorController::MOTOR_ATTR_SG90), DEG_TO_RAD(0.0f), DEG_TO_RAD(180.0f), true, false);
 }
 
 Error Body::init()
@@ -42,7 +42,7 @@ Error Body::init()
     LOG_SCOPE(TAG, "Body::Init");
 
     // Initialize the legs
-    for (size_t i = 0; i < static_cast<size_t>(Leg::Index::COUNT); i++)
+    for (size_t i = 0; i < static_cast<size_t>(Leg::Id::Count); i++)
     {
         if (Error err = legs[i].init(); err != Error::None)
         {
@@ -96,7 +96,7 @@ Error Body::deinit()
     }
 
     // Deinitialize the legs
-    for (size_t i = 0; i < static_cast<size_t>(Leg::Index::COUNT); i++)
+    for (size_t i = 0; i < static_cast<size_t>(Leg::Id::Count); i++)
     {
         if (Error err = legs[i].deinit(); err != Error::None)
         {
@@ -126,7 +126,7 @@ Error Body::deinit()
 Error Body::estimateState(float dt)
 {
     // update legs
-    for (size_t i = 0; i < static_cast<size_t>(Leg::Index::COUNT); i++)
+    for (size_t i = 0; i < static_cast<size_t>(Leg::Id::Count); i++)
     {
         if (Error err = legs[i].estimateState(dt); err != Error::None)
         {
@@ -141,7 +141,7 @@ Error Body::applyCommand(BodyJointState jointState, float dt)
     Error err;
 
     // update legs
-    for (size_t i = 0; i < static_cast<size_t>(Leg::Index::COUNT); i++)
+    for (size_t i = 0; i < static_cast<size_t>(Leg::Id::Count); i++)
     {
         if ((err = legs[i].applyCommand(jointState.leg_joints[i], dt)) != Error::None)
         {
@@ -166,7 +166,7 @@ Error Body::enable()
     Error err;
 
     // enable legs
-    for (size_t i = 0; i < static_cast<size_t>(Leg::Index::COUNT); i++)
+    for (size_t i = 0; i < static_cast<size_t>(Leg::Id::Count); i++)
     {
         if ((err = legs[i].enable()) != Error::None)
         {
@@ -191,7 +191,7 @@ Error Body::disable()
     Error err;
 
     // disable legs
-    for (size_t i = 0; i < static_cast<size_t>(Leg::Index::COUNT); i++)
+    for (size_t i = 0; i < static_cast<size_t>(Leg::Id::Count); i++)
     {
         if ((err = legs[i].disable()) != Error::None)
         {

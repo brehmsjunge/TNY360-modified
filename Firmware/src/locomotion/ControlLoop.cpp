@@ -24,19 +24,26 @@ static bool IRAM_ATTR timer_on_alarm_cb(gptimer_handle_t timer, const gptimer_al
 ControlLoop::ControlLoop()
     : initialized(false)
 {
+}
+
+Error ControlLoop::init()
+{
+    if (initialized) return Error::None;
+
+    // Initialize kinematics engine with the right config
     kinematics_engine = KinematicsEngine(KinematicsEngine::KinematicsConfig{
         .hip_shift_x = HIP_POS_X_M,
         .hip_shift_y = HIP_POS_Y_M,
         .hip_offset = HIP_OFFSET_M,
         .length_thigh = LEG_THIGH_LENGTH_M,
         .length_calf = LEG_CALF_LENGTH_M,
-        .leg_inverted = { true, false, true, false },
+        .leg_inverted = {
+            Robot::GetInstance().getBody().getLeg(Leg::Id::FrontLeft).isInverted(),
+            Robot::GetInstance().getBody().getLeg(Leg::Id::BackLeft).isInverted(),
+            Robot::GetInstance().getBody().getLeg(Leg::Id::BackRight).isInverted(),
+            Robot::GetInstance().getBody().getLeg(Leg::Id::FrontRight).isInverted(),
+        },
     });
-}
-
-Error ControlLoop::init()
-{
-    if (initialized) return Error::None;
 
     // Create the control loop task ON REFLEX CORE
     BaseType_t err = xTaskCreatePinnedToCore([](void* PvParams){
@@ -72,6 +79,11 @@ Error ControlLoop::init()
         .clk_src = GPTIMER_CLK_SRC_DEFAULT,
         .direction = GPTIMER_COUNT_UP,
         .resolution_hz = TIMER_RESOLUTION,
+        .intr_priority = 5, // Set a medium priority (high priority but still keeping some room for critical tasks)
+        .flags = {
+            .intr_shared = false, // Don't share the interrupt
+            .allow_pd = true, // Allow power down in sleep mode (we don't use it anyways)
+        },
     };
     if (esp_err_t err = gptimer_new_timer(&timer_config, &timer); err != ESP_OK)
     {
@@ -212,16 +224,34 @@ Error ControlLoop::control_task()
         LOG_ERROR(TAG, "Error estimating body state");
     }
 
+    /// Store the state in the IPC to be read by the Brain core (we don't check return error here, no time to manage them)
+    IPC::RobotState state;
+    state.timestamp_ms = current_time;
+    for (int i = 0; i < IPC::NB_JOINTS; i++)
+    {
+        Joint::Id joint_id = static_cast<Joint::Id>(i);
+        Joint* joint = Joint::GetJoint(joint_id);
+        if (joint == nullptr) continue;
+        joint->getTarget(state.joints[i].target_angle_rad);
+        joint->getFeedback(state.joints[i].feedback_angle_rad);
+        joint->getPrediction(state.joints[i].model_angle_rad);
+        joint->getPosition(state.joints[i].estimated_angle_rad);
+    }
+    state.body_orientation = Robot::GetInstance().getBody().getIMU().getOrientation();
+    state.imu_down_vector = Robot::GetInstance().getBody().getIMU().getDownVector();
+    IPC::setState(state);
+
     /*** 2 - RUN CARTESIAN CONTROL (USING BRAIN CONTROL INTENT) ***/
 
     // build the initial state
     BodyCartesianState cartesian_state;
     cartesian_state.body_pos = intent.body_pos;
     cartesian_state.body_rot = intent.body_rot;
-    cartesian_state.legs[0].is_grounded = Robot::GetInstance().getBody().getFrontLeftLeg().isGrounded();
-    cartesian_state.legs[1].is_grounded = Robot::GetInstance().getBody().getFrontRightLeg().isGrounded();
-    cartesian_state.legs[2].is_grounded = Robot::GetInstance().getBody().getBackLeftLeg().isGrounded();
-    cartesian_state.legs[3].is_grounded = Robot::GetInstance().getBody().getBackRightLeg().isGrounded();
+    for (int i = 0; i < (int) Leg::Id::Count; i++)
+    {
+        Leg::Id leg_id = static_cast<Leg::Id>(i);
+        cartesian_state.legs[i].is_grounded = Robot::GetInstance().getBody().getLeg(leg_id).isGrounded();
+    }
 
     // Gait planner (ideal movement)
     if (new_intent)
@@ -254,7 +284,31 @@ Error ControlLoop::control_task()
     /*** 4 - RUN JOINT CONTROL (USING BRAIN CONTROL INTENT) ***/
 
     // Joint Override
+    for (uint8_t leg_id = 0; leg_id < (uint8_t) Leg::Id::Count; leg_id++)
+    {
+        for (uint8_t leg_joint_id = 0; leg_joint_id < (uint8_t) Leg::JointId::Count; leg_joint_id++)
+        {
+            uint8_t joint_id = leg_id * (uint8_t) Leg::JointId::Count + leg_joint_id;
 
+            IPC::JointOverride& joint_override = intent.joint_overrides[joint_id];
+            if (joint_override.mode == IPC::OverrideMode::None) continue;
+            else if (joint_override.mode == IPC::OverrideMode::Absolute)
+            {
+                joint_state.leg_joints[leg_id].joint_angles_rad[leg_joint_id] = joint_override.value_rad;
+            }
+            else if (joint_override.mode == IPC::OverrideMode::Relative)
+            {
+                joint_state.leg_joints[leg_id].joint_angles_rad[leg_joint_id] += joint_override.value_rad;
+            }
+        }
+    }
+    // ears
+    IPC::JointOverride& ear_l_override = intent.joint_overrides[(uint8_t) Joint::Id::EarLeft];
+    if (ear_l_override.mode == IPC::OverrideMode::Absolute) joint_state.ear_l_rad = ear_l_override.value_rad;
+    else if (ear_l_override.mode == IPC::OverrideMode::Relative) joint_state.ear_l_rad += ear_l_override.value_rad;
+    IPC::JointOverride& ear_r_override = intent.joint_overrides[(uint8_t) Joint::Id::EarRight];
+    if (ear_r_override.mode == IPC::OverrideMode::Absolute) joint_state.ear_r_rad = ear_r_override.value_rad;
+    else if (ear_r_override.mode == IPC::OverrideMode::Relative) joint_state.ear_r_rad += ear_r_override.value_rad;
 
     /*** 5 - SEND EVERYTHING ***/
 
@@ -281,6 +335,7 @@ Error ControlLoop::control_task()
     if (perf_counter++ == CONTROL_LOOP_FREQ_HZ)
     {
         avg_ms = perf_controltask.get_avg_ms(CONTROL_LOOP_FREQ_HZ);
+        LOG_DEBUG(TAG, "Control loop average execution time : %.2f ms", avg_ms);
         perf_controltask.reset();
         perf_counter = 0;
     }

@@ -13,6 +13,29 @@
 
 namespace BootManager
 {
+    bool boot_ZERO_CALIB_needed()
+    {
+        // Check for zero-calibration flag
+        NVS::Handle* nvsHandle;
+        if (Error err = NVS::Open("boot", &nvsHandle); err != Error::None)
+        {
+            LOG_ERROR(TAG, "Error opening NVS 'boot' namespace : %s", ErrorToString(err));
+            return true; // block robot from booting as normal
+        }
+
+        bool skip_zerocalib = false;
+        if (Error err = nvsHandle->get<bool>("skip_zerocalib", skip_zerocalib); err != Error::None)
+        {
+            LOG_ERROR(TAG, "Error reading zero-calibration flag from NVS : %s", ErrorToString(err));
+            NVS::Close(nvsHandle);
+            return true; // block robot from booting as normal
+        }
+
+        NVS::Close(nvsHandle);
+
+        return !skip_zerocalib; // if flag is not set, we need zero calibration
+    }
+
     void boot_ZERO_CALIB()
     {
         // Initialize LED module for error display
@@ -47,12 +70,12 @@ namespace BootManager
         Menus::SetCurrentMenu(Menus::GetMenuSplash());
 
         // Initialize Motor Driver for motor control
-        // if (Error err = MotorDriver::Init(); err != Error::None)
-        // {
-        //     LOG_ERROR(TAG, "Failed to initialize MotorDriver module");
-        //     LED::LoopErrorCode(ErrorCode::DriverInitFailed);
-        //     return;
-        // }
+        if (Error err = MotorDriver::Init(); err != Error::None)
+        {
+            LOG_ERROR(TAG, "Failed to initialize MotorDriver module");
+            LED::LoopErrorCode(ErrorCode::DriverInitFailed);
+            return;
+        }
 
         // Show zero-calib menu
         MenuZeroCalib menu;

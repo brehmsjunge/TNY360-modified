@@ -15,34 +15,17 @@ namespace BootManager
             return true; // block robot from booting as normal
         }
 
-        NVS::Handle* nvsHandle;
-        if (Error err = NVS::Open("boot", &nvsHandle); err != Error::None)
+        if (boot_ZERO_CALIB_needed())
         {
-            LOG_ERROR(TAG, "Error opening NVS 'boot' namespace : %s", ErrorToString(err));
-            return true; // block robot from booting as normal
-        }
-
-        // Check for zero-calibration flag
-        bool zeroCalibrated;
-        if (Error err = nvsHandle->get<bool>("zero-calib", zeroCalibrated); err != Error::None)
-        {
-            if (err == Error::NotFound) // not found ? normal if first boot ever
-            {
-                zeroCalibrated = false;
-            }
-            else // something went wrong
-            {
-                LOG_ERROR(TAG, "Failed to get 'zero-calib' flag from NVS : %s", ErrorToString(err));
-                return true; // block robot from booting as normal
-            }
-        }
-
-        NVS::Close(nvsHandle);
-
-        if (!zeroCalibrated)
-        {
-            LOG_INFO(TAG, "Zero-Calibration flag missing. Starting in ZERO_CALIB boot mode");
+            LOG_INFO(TAG, "Zero calibration is needed. Starting in ZERO CALIB boot mode");
             boot_ZERO_CALIB();
+            return true; // start zero calib boot
+        }
+
+        if (boot_CALIBRATION_needed())
+        {
+            LOG_INFO(TAG, "Calibration data missing. Starting in CALIBRATION boot mode");
+            boot_CALIBRATION();
             return true; // don't boot as normal
         }
 

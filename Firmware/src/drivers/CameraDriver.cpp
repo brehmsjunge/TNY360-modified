@@ -36,6 +36,7 @@ static camera_config_t camera_config = {
 
     .jpeg_quality = 20,
     .fb_count = 1,
+    .fb_location = CAMERA_FB_IN_PSRAM, // We have external PSRAM, use it :)
     .grab_mode = CAMERA_GRAB_WHEN_EMPTY,
 
     .sccb_i2c_port = I2C_NUM_1, // using secondary i2c bus (the "slow" one)
@@ -101,7 +102,7 @@ esp_err_t stream_handler(httpd_req_t *req) {
     res = httpd_resp_set_type(req, "multipart/x-mixed-replace;boundary=" "____boundary____");
     if (res != ESP_OK) return res;
 
-    int64_t last_frame_time = esp_timer_get_time();
+    // int64_t last_frame_time = esp_timer_get_time();
 
     while (true) {
         // Get the image
@@ -212,7 +213,10 @@ Error CameraDriver::start()
         .uri       = "/*", // Wildcard
         .method    = HTTP_GET,
         .handler   = stream_handler,
-        .user_ctx  = this
+        .user_ctx  = this,
+        .is_websocket = false,
+        .handle_ws_control_frames = false,
+        .supported_subprotocol = nullptr,
     };
     if (esp_err_t err = httpd_register_uri_handler(server, &catch_all_uri); err != ESP_OK)
     {

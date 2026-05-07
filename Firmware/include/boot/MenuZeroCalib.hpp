@@ -4,6 +4,8 @@
 class MenuZeroCalib : public Menus::Menu
 {
 public:
+    constexpr static const char* TAG = "MenuZeroCalib";
+
     MenuZeroCalib() = default;
     virtual ~MenuZeroCalib() = default;
 

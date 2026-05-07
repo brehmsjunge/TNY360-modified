@@ -54,14 +54,14 @@ namespace ScreenDriver
         }
 
         esp_lcd_panel_dev_config_t panel_config = {
-            .reset_gpio_num = -1,
             .rgb_ele_order = LCD_RGB_ELEMENT_ORDER_RGB,
             .data_endian = LCD_RGB_DATA_ENDIAN_LITTLE,
             .bits_per_pixel = SH1106_PIXELS_PER_BYTE / 8,
+            .reset_gpio_num = GPIO_NUM_NC,
+            .vendor_config = NULL,
             .flags = {
                 .reset_active_high = false,
             },
-            .vendor_config = NULL,
         };
         if (esp_err_t err = esp_lcd_new_panel_sh1106(io_handle, &panel_config, &panel_handle); err != ESP_OK)
         {

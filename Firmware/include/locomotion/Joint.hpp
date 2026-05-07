@@ -7,15 +7,34 @@
 class Joint
 {
 public:
-    constexpr static float MAX_VELOCITY_RAD_S = 5.0f; // Maximum velocity in radians per second
+    constexpr static float MAX_VELOCITY_RAD_S = 6.0f; // Maximum velocity in radians per second
     constexpr static const char* TAG = "Joint";
 
+    enum class Id : uint8_t
+    {
+        FrontLeftHipRoll = 0,
+        FrontLeftHipPitch = 1,
+        FrontLeftKneePitch = 2,
+        BackLeftHipRoll = 3,
+        BackLeftHipPitch = 4,
+        BackLeftKneePitch = 5,
+        BackRightHipRoll = 6,
+        BackRightHipPitch = 7,
+        BackRightKneePitch = 8,
+        FrontRightHipRoll = 9,
+        FrontRightHipPitch = 10,
+        FrontRightKneePitch = 11,
+        EarLeft = 12,
+        EarRight = 13,
+        Count = 14
+    };
+
     /**
-     * @brief Get a Joint instance by its motor channel.
-     * @param motor_channel The motor channel associated with the joint.
+     * @brief Get a Joint instance by its ID.
+     * @param id The ID of the joint.
      * @return Pointer to the Joint instance, or nullptr if not found.
      */
-    static Joint* GetJoint(MotorDriver::Channel motor_channel);
+    static Joint* GetJoint(Joint::Id id);
 
     /**
      * @brief Clamp maximum velocity for all joints.
@@ -26,7 +45,7 @@ public:
 
     Joint();
 
-    Joint(uint8_t id, MotorController motor_controller, float min_angle_rad = 0.f, float max_angle_rad = TWO_PI, bool inverted = false, bool has_feedback = true);
+    Joint(Joint::Id id, MotorController motor_controller, float min_angle_rad = 0.f, float max_angle_rad = TWO_PI, bool inverted = false, bool has_feedback = true);
 
     /**
      * @brief Initialize the joint.
@@ -143,7 +162,7 @@ private:
     static Joint* joints[JOINT_COUNT]; // static array of all joints (index is motor channel)
     static float joint_velocity_clamp_rad_s; // static variable for global maximum joint velocity
 
-    uint8_t id;
+    Joint::Id id;
     MotorController motor_controller;
     KalmanFilter1D kalman_filter;
     float min_angle_rad;

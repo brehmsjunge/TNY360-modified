@@ -5,13 +5,13 @@
 Joint* Joint::joints[JOINT_COUNT] = { nullptr }; // Static array to hold Joint instances
 float Joint::joint_velocity_clamp_rad_s = Joint::MAX_VELOCITY_RAD_S; // Initialize static max velocity variable
 
-Joint* Joint::GetJoint(uint8_t id)
+Joint* Joint::GetJoint(Joint::Id id)
 {
-    if (id >= JOINT_COUNT)
+    if (id >= Joint::Id::Count)
     {
         return nullptr;
     }
-    return joints[id];
+    return joints[(int)id];
 }
 
 Error Joint::ClampVelocity(float max_velocity_rad_s)
@@ -33,7 +33,7 @@ Error Joint::ClampVelocity(float max_velocity_rad_s)
 
 Joint::Joint() {}
 
-Joint::Joint(uint8_t id, MotorController motor_controller, float min_angle_rad, float max_angle_rad, bool inverted, bool has_feedback)
+Joint::Joint(Joint::Id id, MotorController motor_controller, float min_angle_rad, float max_angle_rad, bool inverted, bool has_feedback)
     : id(id), motor_controller(motor_controller), min_angle_rad(min_angle_rad), max_angle_rad(max_angle_rad),
       inverted(inverted), velocity_rad_s(MAX_VELOCITY_RAD_S), has_feedback(has_feedback)
 {
@@ -44,7 +44,7 @@ Error Joint::init()
     LOG_SCOPE(TAG, "Joint::init [id=%d]", id);
 
     // Register this joint instance
-    joints[id] = this;
+    joints[(int)id] = this;
 
     // NOTE : Don't move this in the constructor, as we can have copy/move operations in constructors arguments (yes, that will be horrible to debug)
 
@@ -121,6 +121,8 @@ Error Joint::estimateState(float dt)
 
 Error Joint::applyCommand(float joint_angle_rad, float dt)
 {
+    LOG_DEBUG(TAG, "JOINT %d - Apply %+06.1f deg", id, RAD_TO_DEG(joint_angle_rad));
+
     if (joint_angle_rad < min_angle_rad || joint_angle_rad > max_angle_rad)
     {
         LOG_ERROR(TAG, "JOINT %d - Requested target angle %.2f rad is out of bounds (%.2f - %.2f rad)", id, joint_angle_rad, min_angle_rad, max_angle_rad);
@@ -180,7 +182,7 @@ Error Joint::enable()
     {
         // because the motor was probably disabled before,
         // model_angle may have drifted from the actual position.
-        // Thus, to avoid sudden jumps, we reset the model and estimate to the current position.
+        // Thus, to avoid sudden jumps, we reset the model and kalman filter to the current position.
         if (Error err = get_motorcontroller_position(feedback_angle_rad); err != Error::None)
         {
             return err;
@@ -189,6 +191,7 @@ Error Joint::enable()
         estimate_angle_rad = feedback_angle_rad;
         target_angle_rad = feedback_angle_rad;
         kalman_filter.ResetState(feedback_angle_rad);
+        send_motorcontroller_position(feedback_angle_rad);
 
         // Now that the model is synced, enable the motor
         return motor_controller.enable();
@@ -197,7 +200,7 @@ Error Joint::enable()
     {
         // No feedback.
         // We don't try to lerp the motor position from it's current position to the target.
-        // We will enable the motor on the next setTarget() call, setting the model_angle_rad in the meantime
+        // We will enable the motor on the next applyCommand() call, setting the model_angle_rad in the meantime
         return Error::None;
     }
 }

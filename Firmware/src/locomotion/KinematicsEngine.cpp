@@ -17,15 +17,15 @@ Error KinematicsEngine::computeBodyIK(const BodyCartesianState& cartesian, BodyJ
 
     Vec3f hip_positions[4] = {
         Vec3f( config.hip_shift_x,  config.hip_shift_y, 0.f), // FL
-        Vec3f( config.hip_shift_x, -config.hip_shift_y, 0.f), // FR
         Vec3f(-config.hip_shift_x,  config.hip_shift_y, 0.f), // BL
         Vec3f(-config.hip_shift_x, -config.hip_shift_y, 0.f), // BR
+        Vec3f( config.hip_shift_x, -config.hip_shift_y, 0.f), // FR
     };
 
     for (int i = 0; i < 4; i++)
     {
         // Feet position in world frame (from gait planner)
-        Vec3f foot_target = cartesian.legs[i].target_pos;
+        const Vec3f& foot_target = cartesian.legs[i].target_pos;
         // Feet position from world frame to body frame
         Vec3f foot_in_body_frame = body_transform.worldToLocal(foot_target);
         // Feet position from body frame to hip frame
@@ -37,11 +37,11 @@ Error KinematicsEngine::computeBodyIK(const BodyCartesianState& cartesian, BodyJ
             target_hip_frame.y = -target_hip_frame.y;
         }
 
-        // 6. Calculer l'IK de cette patte
+        // Calculate leg IK
         if (Error err = computeLegIK(target_hip_frame, joints.leg_joints[i]); err != Error::None)
         {
             LOG_ERROR(TAG, "IK Failed for leg %d", i);
-            return err; // Tu pourrais aussi continuer et figer cette patte
+            return err;
         }
     }
 
@@ -79,9 +79,9 @@ Error KinematicsEngine::computeLegIK(const Vec3f& target, LegJointState& joints)
     float knee_angle_val = (thigh_sq + calf_sq - dist_leg_sq) / (2.0f * config.length_thigh * config.length_calf);
     float knee_angle = acosf(knee_angle_val);
 
-    joints.hipRoll_rad = hip_roll_base - roll_compensation;
-    joints.hipPitch_rad = hip_pitch_base - hip_pitch_angle;
-    joints.kneePitch_rad = PI - knee_angle; 
+    joints.joint_angles_rad[0] = hip_roll_base - roll_compensation;
+    joints.joint_angles_rad[1] = hip_pitch_base - hip_pitch_angle;
+    joints.joint_angles_rad[2] = PI - knee_angle; 
     
     return Error::None;
 }

@@ -5,18 +5,23 @@
 #include "common/Log.hpp"
 #include "common/NVS.hpp"
 #include "drivers/MotorDriver.hpp"
+#include <esp_system.h>
 
 bool MenuZeroCalib::onBack()
 {
+    // write flag in NVS
+    NVS::Handle* nvshandle;
+    if (Error err = NVS::Open("boot", &nvshandle); err != Error::None)
+    {
+        LOG_ERROR(TAG, "Error opening NVS 'boot' namespace : %s", ErrorToString(err));
+        return true; // even if we fail to save, we still want to go back
+    }
+    nvshandle->set<bool>("skip_zerocalib", true);
+    esp_restart(); // restart to apply zero-calibration flag
     return false;
 }
 
 bool MenuZeroCalib::onSelect()
-{
-    return false;
-}
-
-bool MenuZeroCalib::onNext()
 {
     if (calibrated || calibrating) return false;
     calibrating = true;
@@ -25,13 +30,13 @@ bool MenuZeroCalib::onNext()
     return true;
 }
 
+bool MenuZeroCalib::onNext()
+{
+    return false;
+}
+
 bool MenuZeroCalib::onPrev()
 {
-    // skipping to final state
-    calibrating = true;
-    calibrated = true;
-    motorIndex = 16;
-    triggerRender();
     return false;
 }
 
@@ -87,11 +92,11 @@ void MenuZeroCalib::onUpdate()
     {
         if (Error err = MotorDriver::SetPWM(motorIndex, MotorDriver::MS_TO_PWM(1.5f)); err != Error::None)
         {
-            LOG_ERROR("ZeroCalib", "MotorDriver::SetPWM failed");
+            LOG_ERROR(TAG, "MotorDriver::SetPWM failed");
         }
         if (Error err = MotorDriver::SendData(); err != Error::None)
         {
-            LOG_ERROR("ZeroCalib", "MotorDriver::SendData failed");
+            LOG_ERROR(TAG, "MotorDriver::SendData failed");
         }
         motorIndex++;
     }
@@ -102,10 +107,10 @@ void MenuZeroCalib::onUpdate()
         NVS::Handle* nvshandle;
         if (Error err = NVS::Open("boot", &nvshandle); err != Error::None)
         {
-            LOG_ERROR("ZeroCalib", "Error opening NVS 'boot' namespace : %s", ErrorToString(err));
+            LOG_ERROR(TAG, "Error opening NVS 'boot' namespace : %s", ErrorToString(err));
             return;
         }
-        nvshandle->set<bool>("zero-calib", true);
+        nvshandle->set<bool>("skip_zerocalib", true);
     }
 
     triggerRender();

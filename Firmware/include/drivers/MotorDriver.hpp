@@ -5,7 +5,7 @@
 namespace MotorDriver
 {
     using Channel = uint8_t;
-    using Value = uint16_t;
+    using Value = int;
     constexpr Channel CHANNEL_COUNT = 16;
 
     /**
