@@ -8,3 +8,6 @@ managed_components/
 
 data/web/
 *.old
+
+sdkconfig.*
+!sdkconfig.defaults

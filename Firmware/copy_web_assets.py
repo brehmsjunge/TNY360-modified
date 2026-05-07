@@ -8,6 +8,16 @@ Import("env")
 NUXT_OUTPUT_DIR = Path("extras/WebPortal/.output/public")
 DATA_DIR = Path("data/web")
 
+COLOR = {
+    "RED": "31",
+    "GREEN": "32",
+    "YELLOW": "33",
+    "BLUE": "34",
+}
+
+def coloredString(text, color_code):
+    return f"\033[{color_code}m{text}\033[0m"
+
 def copy_web_assets(*args, **kwargs):
     print("\n--- Removing old files ---")
     # Remove old web assets in /data/web
@@ -22,8 +32,8 @@ def copy_web_assets(*args, **kwargs):
     
     # 1. Check if the Nuxt build exists
     if not NUXT_OUTPUT_DIR.exists():
-        print(f"ERROR: The folder {NUXT_OUTPUT_DIR} does not exist.")
-        print("-> Run 'npm run generate' in your WebPortal folder first!")
+        print(f"{coloredString('WARNING', COLOR['YELLOW'])}: The folder {coloredString(NUXT_OUTPUT_DIR, COLOR['BLUE'])} does not exist. The web dashboard will not be available.")
+        print(f"-> Run [{coloredString('npm install', COLOR['GREEN'])}] and [{coloredString('npm run generate', COLOR['GREEN'])}] in your [{coloredString('/extras/WebPortal', COLOR['BLUE'])}] folder first!\n")
         return
 
     # 2. Clean the existing data folder (to avoid old ghost files)
