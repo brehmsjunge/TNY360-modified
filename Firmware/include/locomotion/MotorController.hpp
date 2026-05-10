@@ -47,10 +47,11 @@ public:
         MotorDriver::Value pwm_min = 0;
         MotorDriver::Value pwm_max = 0;
         MotorDriver::Value pwm_deadband = 0;
-        AnalogDriver::Value feedback_min = 0000;
-        AnalogDriver::Value feedback_max = 3300; // default to 0-3.3V range
+        AnalogDriver::Value feedback_min = 0.5f;
+        AnalogDriver::Value feedback_max = 2.8f; // default to 0-3.3V range (with some margin)
         AnalogDriver::Value feedback_noise = 0;
         int feedback_latency_ms = 0;
+        bool feedback_inverted = false;
         float max_speed = 0.f; // in progress per second
     };
 

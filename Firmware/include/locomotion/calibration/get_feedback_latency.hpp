@@ -47,7 +47,6 @@ Error get_feedback_latency(FeedbackLatencyParams params, MotorDriver::Channel mo
 
     // Gather all samples
     int latencies[params.nb_samples];
-    LOG_SCOPE("get_feedback_latency", "Latency samples");
     for (int i = 0; i < params.nb_samples; i++)
     {
         // Get the base feedback voltage
@@ -80,11 +79,8 @@ Error get_feedback_latency(FeedbackLatencyParams params, MotorDriver::Channel mo
         if (start_tick + LATENCY_TIMEOUT_MS <= now_tick)
         {
             // timeout, return error
-            LOG_ERROR("get_feedback_latency", "Reached latency timeout (%dms). Check wiring and noise levels.", LATENCY_TIMEOUT_MS);
             return Error::HardwareFailure;
         }
-
-        LOG_DEBUG("get_feedback_latency", "Sample %d : %d ms (feedback change: %.3f V)", i, latencies[i], std::abs(new_feedback - base_feedback));
 
         // move to center, wait a bit and continue latency testing
         RETURN_ERROR(MotorDriver::SetPWM(motor_channel, params.pwm_center));

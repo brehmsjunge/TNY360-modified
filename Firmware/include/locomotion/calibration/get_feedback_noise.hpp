@@ -27,14 +27,12 @@ Error get_feedback_noise(FeedbackNoiseParams params, AnalogDriver::Channel chann
 
     // Read the voltages
     {
-        LOG_SCOPE("feedback_noise", "Feedback values");
         AnalogDriver::internal::select(channel);
         vTaskDelay(pdMS_TO_TICKS(1)); // Short delay to ensure stabilization after channel switch
         for (uint16_t i = 0; i < params.nb_samples; i++)
         {
             RETURN_ERROR(AnalogDriver::internal::read_subsampled(samples[i], params.nb_subsamples));
             vTaskDelay(pdMS_TO_TICKS(params.sample_delay_ms));
-            LOG_DEBUG("feedback_noise", "Sample %d : %.3f V", i, samples[i]);
         }
     }
 

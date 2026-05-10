@@ -23,7 +23,7 @@ struct PhysicalBoundParams
     /// @brief PWM step gap to use for the slow approach phase
     MotorDriver::Value pwm_slowstep = MotorDriver::MS_TO_PWM(0.002);
     /// @brief PWM backoff to apply after detecting the bound with the fast approach, before starting the slow approach
-    MotorDriver::Value pwm_backoff = MotorDriver::MS_TO_PWM(0.15);
+    MotorDriver::Value pwm_backoff = MotorDriver::MS_TO_PWM(0.30);
     /// @brief Direction in which to search for the bound (1 for max bound, -1 for min bound)
     int direction = 1;
     /// @brief Number of subsamples to take for each feedback reading in the fast approach
@@ -71,8 +71,6 @@ Error get_physical_bound(PhysicalBoundParams params, MotorDriver::Channel motor_
 
     MotorDriver::Value eval_step = params.direction * MotorDriver::MS_TO_PWM(0.05);
     {
-        LOG_SCOPE("get_physical_bound", "Step 0: Profiling inside Safe Zone");
-
         // Send motor to the start of the evaluation range (safe zone)
         RETURN_ERROR(MotorDriver::SetPWM(motor_channel, eval_start));
         RETURN_ERROR(MotorDriver::SendData());
@@ -102,43 +100,47 @@ Error get_physical_bound(PhysicalBoundParams params, MotorDriver::Channel motor_
 
         // Stall threshold is noise x2 too high OR regression error x3 too high
         stall_threshold = std::max(static_cast<float>(params.feedback_noise) * 2.0f, error_std * 3.0f);
-        LOG_DEBUG("get_physical_bound", "Profile computed: Slope=%.4f, Threshold=%.3f V", slope, stall_threshold);
     }
     MotorDriver::Value current_pwm = eval_end;
 
     // =========================================================================
     // STEP 1 : Fast Approach
     // =========================================================================
-    int stall_counter = 0;
+    float smoothed_error = 0.0f;
+    bool is_first_sample_fast = true;
+    const float ERROR_ALPHA = 0.3f; 
+    
+    float fast_dynamic_threshold = stall_threshold * 0.9f;
+
     MotorDriver::Value fast_bound_pwm = current_pwm;
     bool bound_found = false;
     {
-        LOG_SCOPE("get_physical_bound", "Step 1: Fast Approach");
-
         while ((params.direction == 1 && current_pwm <= params.pwm_max) || 
             (params.direction == -1 && current_pwm >= params.pwm_min))
         {
             current_pwm += params.direction * params.pwm_faststep;
             RETURN_ERROR(MotorDriver::SetPWM(motor_channel, current_pwm));
             RETURN_ERROR(MotorDriver::SendData());
-            vTaskDelay(pdMS_TO_TICKS(params.feedback_latency_ms * 2)); // little margin to be sure
+            vTaskDelay(pdMS_TO_TICKS(params.feedback_latency_ms * 2));
 
             AnalogDriver::Value feedback;
             RETURN_ERROR(AnalogDriver::internal::read_subsampled(feedback, params.feedback_subsamples_fast));
 
-            // Prédiction vs Réalité
             float expected_feedback = slope * current_pwm + offset;
-            float error = std::abs(feedback - expected_feedback);
+            
+            float signed_error = feedback - expected_feedback;
 
-            if (error > stall_threshold) {
-                stall_counter++;
-                if (stall_counter >= 3) { // 3 iterations debounce
-                    fast_bound_pwm = current_pwm;
-                    bound_found = true;
-                    break;
-                }
+            if (is_first_sample_fast) {
+                smoothed_error = signed_error;
+                is_first_sample_fast = false;
             } else {
-                stall_counter = 0; // Reset if false stall detected
+                smoothed_error = (ERROR_ALPHA * signed_error) + ((1.0f - ERROR_ALPHA) * smoothed_error);
+            }
+
+            if (std::abs(smoothed_error) > fast_dynamic_threshold) {
+                fast_bound_pwm = current_pwm;
+                bound_found = true;
+                break;
             }
         }
 
@@ -152,7 +154,6 @@ Error get_physical_bound(PhysicalBoundParams params, MotorDriver::Channel motor_
     // Step 2 : Back-off
     // =========================================================================
     {
-        LOG_SCOPE("get_physical_bound", "Step 2: Back-off");
         current_pwm = fast_bound_pwm - (params.direction * params.pwm_backoff);
         RETURN_ERROR(MotorDriver::SetPWM(motor_channel, current_pwm));
         RETURN_ERROR(MotorDriver::SendData());
@@ -163,34 +164,44 @@ Error get_physical_bound(PhysicalBoundParams params, MotorDriver::Channel motor_
     // Step 3 : Precision Touch
     // =========================================================================
     {
-        LOG_SCOPE("get_physical_bound", "Step 3: Precision Touch");
-        stall_counter = 0;
+        smoothed_error = 0.0f;
+        bool is_first_sample_slow = true;
+        const float SLOW_ERROR_ALPHA = 0.5f; 
+        
+        float precision_threshold = stall_threshold * 0.5f;
 
-        while ((params.direction == 1 && current_pwm <= params.pwm_max) || 
-            (params.direction == -1 && current_pwm >= params.pwm_min))
+        while ((params.direction == 1 && current_pwm <= params.pwm_max) || (params.direction == -1 && current_pwm >= params.pwm_min))
         {
             current_pwm += params.direction * params.pwm_slowstep;
             RETURN_ERROR(MotorDriver::SetPWM(motor_channel, current_pwm));
             RETURN_ERROR(MotorDriver::SendData());
-            vTaskDelay(pdMS_TO_TICKS(params.feedback_latency_ms * 2)); // little margin to be sure
+            vTaskDelay(pdMS_TO_TICKS(params.feedback_latency_ms * 2));
 
             AnalogDriver::Value feedback;
             RETURN_ERROR(AnalogDriver::internal::read_subsampled(feedback, params.feedback_subsamples_slow));
 
             float expected_feedback = slope * current_pwm + offset;
-            float error = std::abs(feedback - expected_feedback);
+            
+            // MÊME CORRECTION : Pas de std::abs() ici !
+            float signed_error = feedback - expected_feedback;
 
-            // Little bit more sensitive because we go slower
-            if (error > stall_threshold * 0.8f) {
-                stall_counter++;
-                if (stall_counter >= 2) { // Less debounce needed
-                    out_value.pwm_value = current_pwm;
-                    out_value.feedback_value = feedback;
-                    LOG_DEBUG("get_physical_bound", "Bound precision hit at PWM %d, Feedback %.3f V", current_pwm, feedback);
-                    return Error::None;
-                }
+            if (is_first_sample_slow) {
+                smoothed_error = signed_error;
+                is_first_sample_slow = false;
             } else {
-                stall_counter = 0;
+                smoothed_error = (SLOW_ERROR_ALPHA * signed_error) + ((1.0f - SLOW_ERROR_ALPHA) * smoothed_error);
+            }
+
+            // Test sur la valeur absolue du résultat lissé
+            if (std::abs(smoothed_error) > precision_threshold) {
+                
+                // Little rollback in pwm values to match the real physical bound
+                MotorDriver::Value true_wall_pwm = current_pwm - (params.direction * params.pwm_slowstep * 2);
+
+                out_value.pwm_value = true_wall_pwm;
+                out_value.feedback_value = feedback;
+                
+                return Error::None;
             }
         }
     }

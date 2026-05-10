@@ -120,11 +120,11 @@ Error MotorController::run_calibration_sequence()
     {
         PhysicalBoundParams params;
         params.pwm_center = pwm_center;
-        params.pwm_max = MotorDriver::MS_TO_PWM(2.6);
-        params.pwm_min = MotorDriver::MS_TO_PWM(0.4);
+        params.pwm_max = MotorDriver::MS_TO_PWM(2.8);
+        params.pwm_min = MotorDriver::MS_TO_PWM(0.2);
         params.pwm_safe = MotorDriver::MS_TO_PWM(0.3);
-        params.pwm_faststep = deadband_size * 2.f;
-        params.pwm_slowstep = deadband_size * 0.5f;
+        params.pwm_faststep = deadband_size;
+        params.pwm_slowstep = deadband_size * 0.3f;
         params.direction = -1;
         params.feedback_noise = noise_v;
         params.feedback_latency_ms = feedback_latency_ms;
@@ -142,11 +142,11 @@ Error MotorController::run_calibration_sequence()
     {
         PhysicalBoundParams params;
         params.pwm_center = pwm_center;
-        params.pwm_max = MotorDriver::MS_TO_PWM(2.6);
-        params.pwm_min = MotorDriver::MS_TO_PWM(0.4);
+        params.pwm_max = MotorDriver::MS_TO_PWM(2.8);
+        params.pwm_min = MotorDriver::MS_TO_PWM(0.2);
         params.pwm_safe = MotorDriver::MS_TO_PWM(0.3);
-        params.pwm_faststep = deadband_size * 2.f;
-        params.pwm_slowstep = deadband_size * 0.5f;
+        params.pwm_faststep = deadband_size;
+        params.pwm_slowstep = deadband_size * 0.3f;
         params.direction = 1;
         params.feedback_noise = noise_v;
         params.feedback_latency_ms = feedback_latency_ms;
@@ -169,7 +169,19 @@ Error MotorController::run_calibration_sequence()
     // Save calibration data
     LOG_DEBUG(TAG, "Saving calibration data");
     {
+        CalibrationData data;
+        data.pwm_min = min_bound.pwm_value;
+        data.pwm_max = max_bound.pwm_value;
+        data.pwm_deadband = deadband_size;
+        data.feedback_min = min_bound.feedback_value;
+        data.feedback_max = max_bound.feedback_value;
+        data.feedback_noise = noise_v;
+        data.feedback_inverted = feedback_inverted;
+        data.feedback_latency_ms = feedback_latency_ms;
+        data.max_speed = 0.f; // TODO: implement max speed estimation
 
+        this->calibration_data = data;
+        save_calibration_data();
     }
     this->calibration_progress = 1.0f;
 

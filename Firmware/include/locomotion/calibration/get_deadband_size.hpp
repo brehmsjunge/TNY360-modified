@@ -53,7 +53,6 @@ Error get_deadband_size(DeadbandSizeParams params, MotorDriver::Channel motor_ch
     RETURN_ERROR(AnalogDriver::internal::read_subsampled(last_feedback, params.nb_subsamples));
 
     // Gather all samples
-    LOG_SCOPE("get_deadband_size", "Deadband samples");
     while (sample_index < params.nb_samples && current_pwm < params.max_pwm)
     {
         // Move the motor a bit and wait
@@ -74,13 +73,11 @@ Error get_deadband_size(DeadbandSizeParams params, MotorDriver::Channel motor_ch
             last_feedback = new_feedback;
             last_pwm = current_pwm;
             sample_index++;
-            LOG_DEBUG("get_deadband_size", "Sample %d : deadband = %d PWM (feedback change: %.3f V)", sample_index, deadbands[sample_index-1], abs_diff);
         }
     }
 
     if (sample_index < params.nb_samples)
     {
-        LOG_WARNING("get_deadband_size", "Only %d samples collected. Returning outofbounds error.", sample_index);
         return Error::OutOfBounds;
     }
 
