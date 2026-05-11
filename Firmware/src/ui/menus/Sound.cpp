@@ -94,6 +94,7 @@ void MenuSound::onShow()
     if (!isProviderAdded)
     {
         Robot::GetInstance().getAudioManager().getMixer().addSoundProvider(&sineProvider);
+        sineProvider.setVolume(0.0f);
         isProviderAdded = true;
     }
 }
@@ -146,7 +147,7 @@ void MenuSound::applySoundSettings()
         if (musicProvider == nullptr)
         {
             musicProvider = new MusicProvider();
-            musicProvider->loadFromFile("music.wav");
+            musicProvider->loadFromFile("test.wav");
             man.getMixer().addSoundProvider(musicProvider);
         }
     }

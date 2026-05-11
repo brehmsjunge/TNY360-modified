@@ -293,6 +293,8 @@ Error WiFiManager::__connect_to_ap()
         return Error::SoftwareFailure;
     }
     
+    esp_wifi_set_max_tx_power(40);
+    
     state = Connecting;
 
     return Error::None;
@@ -335,6 +337,8 @@ Error WiFiManager::__create_ap()
         LOG_ERROR(TAG, "esp_wifi_start failed with code 0x%x", err);
         return Error::SoftwareFailure;
     }
+
+    esp_wifi_set_max_tx_power(40);
     
     LOG_DEBUG(TAG, "Starting AP with config: ssid=%s, password=%s", wifi_config.ap.ssid, wifi_config.ap.password);
 
