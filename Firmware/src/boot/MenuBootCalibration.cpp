@@ -9,7 +9,7 @@
 
 constexpr float JOINT_ANGLE[(int) Joint::Id::Count] = {
     DEG_TO_RAD(0.f),  // FrontLeftHipRoll
-    DEG_TO_RAD(-135.f),    // FrontLeftHipPitch
+    DEG_TO_RAD(45.f),    // FrontLeftHipPitch
     DEG_TO_RAD(150.f),  // FrontLeftKneePitch
     DEG_TO_RAD(0.f),  // BackLeftHipRoll
     DEG_TO_RAD(-45.f),    // BackLeftHipPitch
@@ -18,7 +18,7 @@ constexpr float JOINT_ANGLE[(int) Joint::Id::Count] = {
     DEG_TO_RAD(-45.f),    // BackRightHipPitch
     DEG_TO_RAD(150.f),  // BackRightKneePitch
     DEG_TO_RAD(0.f),  // FrontRightHipRoll
-    DEG_TO_RAD(-135.f),    // FrontRightHipPitch
+    DEG_TO_RAD(45.f),    // FrontRightHipPitch
     DEG_TO_RAD(150.f),  // FrontRightKneePitch
     DEG_TO_RAD(0.f),    // EarLeft
     DEG_TO_RAD(0.f)     // EarRight
@@ -61,6 +61,16 @@ bool MenuBootCalibration::onSelect()
         jointId = (Joint::Id) 0;
         progress = 0;
         triggerRender();
+
+        // reset all joints calibrations before starting
+        for (int i = 0; i < (int) Joint::Id::Count; i++)
+        {
+            Joint* joint = Joint::GetJoint((Joint::Id)i);
+            if (joint)
+            {
+                joint->getMotorController().deleteCalibrationData(true);
+            }
+        }
     }
     return true;
 }
@@ -80,15 +90,6 @@ void MenuBootCalibration::onShow()
 {
     triggerRender();
     Robot::GetInstance().getBody().init();
-    // reset all joints calibrations
-    for (int i = 0; i < (int) Joint::Id::Count; i++)
-    {
-        Joint* joint = Joint::GetJoint((Joint::Id)i);
-        if (joint)
-        {
-            joint->getMotorController().deleteCalibrationData(true);
-        }
-    }
 }
 
 void MenuBootCalibration::onHide()

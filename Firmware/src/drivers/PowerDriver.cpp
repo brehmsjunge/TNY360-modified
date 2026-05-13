@@ -7,7 +7,7 @@ namespace PowerDriver
 {
     bool initialized = false;
     static ina219_handle_t ina_handle;
-    static PowerData power_data;
+    static Data power_data;
 
     namespace internal
     {
@@ -123,7 +123,7 @@ namespace PowerDriver
         return Error::None;
     }
 
-    PowerData& GetData()
+    Data& GetData()
     {
         return power_data;
     }

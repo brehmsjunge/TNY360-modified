@@ -53,6 +53,12 @@ void app_main()
     // RPC::ExecuteThreadSafe<Error>([](){
     //     return Robot::GetInstance().getBody().enable();
     // }, [](Error err){});
+
+    // FIXME : I'm putting this comment here because it's important.
+    //         There's no movement synchronization like on the previous version
+    //         (Getting movement time estimation and going at the slowest motor speed)
+    //         This fucks up the body coordination and blocks the robot from walking properly.
+    //         Oh, and also check why is the control loop so slow ... It should be around 4ms not 8ms per iteration.
     
     LOG_INFO(TAG, ">>> Robot is operational.");
 }

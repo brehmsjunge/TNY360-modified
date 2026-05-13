@@ -7,7 +7,7 @@ namespace PowerDriver
 
     using Value = float;
 
-    struct PowerData
+    struct Data
     {
         Value voltage_v; // in volts
         Value current_a; // in amperes
@@ -42,7 +42,8 @@ namespace PowerDriver
 
     /**
      * @brief Get the last read values from the INA219.
-     * @return most recent PowerData object.
+     * @note You need to call ReadData() before to update the values.
+     * @return most recent Data object.
      */
-    PowerData& GetData();
+    Data& GetData();
 }
