@@ -6,6 +6,7 @@
 #include "common/NVS.hpp"
 #include "drivers/MotorDriver.hpp"
 #include <esp_system.h>
+#include <freertos/FreeRTOS.h>
 
 bool MenuZeroCalib::onBack()
 {
@@ -17,6 +18,14 @@ bool MenuZeroCalib::onBack()
         return true; // even if we fail to save, we still want to go back
     }
     nvshandle->set<bool>("skip_zerocalib", true);
+    delete nvshandle;
+
+    // It's not good to draw on callbacks, but we need to display the reboot message
+    ScreenDriver::Clear();
+    Draw::Text(16, 28, "Skipping ...");
+    ScreenDriver::Upload();
+    vTaskDelay(pdMS_TO_TICKS(100)); // wait a bit to be sure it updates
+
     esp_restart(); // restart to apply zero-calibration flag
     return false;
 }

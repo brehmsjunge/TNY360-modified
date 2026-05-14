@@ -34,6 +34,13 @@ bool MenuBootCalibration::onBack()
         {
             nvsHandle->set<bool>("skip_calib", true);
             delete nvsHandle;
+
+            // It's not good to draw on callbacks, but we need to display the reboot message
+            ScreenDriver::Clear();
+            Draw::Text(16, 28, "Skipping ...");
+            ScreenDriver::Upload();
+            vTaskDelay(pdMS_TO_TICKS(100)); // wait a bit to be sure it updates
+
             esp_restart(); // restart to apply skip flag
         }
 
