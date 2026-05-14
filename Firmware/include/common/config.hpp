@@ -84,7 +84,7 @@ constexpr float ANALOG_EMA_ALPHA = 0.5f;
 
 /** Timer management **/
 // Control loop frequency
-constexpr int CONTROL_LOOP_FREQ_HZ = 50; // Hz
+constexpr int CONTROL_LOOP_FREQ_HZ = 200; // Hz
 // Resolution of the control loop timer
 constexpr int TIMER_RESOLUTION = 1'000'000; // 1Mhz, 1 us
 // [][] calculated values below, do not edit manually
@@ -117,7 +117,7 @@ constexpr uint8_t IMU_I2C_ADDR = 0x68;
 constexpr uint32_t IMU_I2C_CLOCK = 100000; // 100kHz, could be up to 400kHz but i'm not 100% confident in the wiring
 // number of samples to gather for calibration
 constexpr uint16_t IMU_NB_CALIB_SAMPLES = 100;
-// NOTE : Internal robot imu update is driven by the main timer at 50Hz
+// NOTE : Internal robot imu update is driven by the main timer at 200Hz
 
 
 /** Motor **/

@@ -30,6 +30,7 @@ protected:
     virtual void onUpdate() override;
 
 private:
+    bool skipping = false;
     Page page = Page::Intro;
     Joint::Id jointId = (Joint::Id) 0;
     float progress = 0;

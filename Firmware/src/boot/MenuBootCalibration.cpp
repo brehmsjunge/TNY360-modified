@@ -35,6 +35,7 @@ bool MenuBootCalibration::onBack()
             nvsHandle->set<bool>("skip_calib", true);
             delete nvsHandle;
 
+            skipping = true;
             // It's not good to draw on callbacks, but we need to display the reboot message
             ScreenDriver::Clear();
             Draw::Text(16, 28, "Skipping ...");
@@ -78,6 +79,23 @@ bool MenuBootCalibration::onSelect()
                 joint->getMotorController().deleteCalibrationData(true);
             }
         }
+    }
+    if (page == Page::Done)
+    {
+        // TEMPORARY : We add the skip flag to be sure
+        NVS::Handle* nvsHandle;
+        if (Error err = NVS::Open("boot", &nvsHandle); err == Error::None)
+        {
+            nvsHandle->set<bool>("skip_calib", true);
+            delete nvsHandle;
+        }
+
+        // restart to apply everything
+        ScreenDriver::Clear();
+        Draw::Text(16, 28, "Restarting ...");
+        ScreenDriver::Upload();
+        vTaskDelay(pdMS_TO_TICKS(100)); // wait a bit to be sure
+        esp_restart(); // restart
     }
     return true;
 }
@@ -157,6 +175,12 @@ void MenuBootCalibration::onRender()
             Draw::Text(20, 0, "Calibration");
             Draw::Text(0, 12, "Calibrated !");
             Draw::Text(0, 32, "Restart robot toapply changes.");
+            {
+                const char* text = "Ok";
+                uint16_t width = Draw::GetTextWidth(text);
+                Draw::Text(ScreenDriver::info.width - width - 12, ScreenDriver::info.height - 9, text);
+            }
+            Draw::Blit(ScreenDriver::info.width - 9, ScreenDriver::info.height - 9, 8, 8, (uint8_t*)Icons::ChevronRight);
             break;
         }
         default: break;
@@ -223,8 +247,12 @@ void MenuBootCalibration::onUpdate()
         case Page::CalibIMU:
         {
             // TODO
+            // For now we just skip directly to done page, but we should implement the actual IMU calibration here
+            page = Page::Done;
             break;
         }
         default: break;
     }
+    
+    if (!skipping) triggerRender(); // to be sure to display the right screen at any time
 }

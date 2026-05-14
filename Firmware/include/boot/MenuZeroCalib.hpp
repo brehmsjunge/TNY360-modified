@@ -21,6 +21,7 @@ protected:
     virtual void onUpdate() override;
 
 private:
+    bool skipping = false;
     bool calibrating = false;
     bool calibrated = false;
     int motorIndex = 0;

@@ -20,6 +20,8 @@ bool MenuZeroCalib::onBack()
     nvshandle->set<bool>("skip_zerocalib", true);
     delete nvshandle;
 
+    skipping = true;
+
     // It's not good to draw on callbacks, but we need to display the reboot message
     ScreenDriver::Clear();
     Draw::Text(16, 28, "Skipping ...");
@@ -61,6 +63,8 @@ void MenuZeroCalib::onHide()
 
 void MenuZeroCalib::onRender()
 {
+    if (skipping) return; // if we're skipping, we don't want to render anything
+
     if (calibrated)
     {
         const char* text = "Calibrated!";
@@ -120,7 +124,10 @@ void MenuZeroCalib::onUpdate()
             return;
         }
         nvshandle->set<bool>("skip_zerocalib", true);
+
+        // Disable all motors after calibration, to avoid jumps on next boot
+        MotorDriver::DisableAllMotors();
     }
 
-    triggerRender();
+    if (!skipping) triggerRender();
 }
