@@ -7,16 +7,20 @@
 
 constexpr uint8_t EYES_SIZE = 30;
 
-FaceMenu::FaceMenu()
-    : Menu()
+MenuFace* MenuFace::instance = nullptr;
+
+MenuFace::MenuFace()
+    : Menu("Face"), menuMain(MenuMain(this))
 {
+    instance = this;
+
     // set defaut eyes info (open looking forward)
     eyes_info.look_x = 0.0f;
     eyes_info.look_y = 0.0f;
     eyes_info.skew = 0.0f;
     eyes_info.size = 1.0f;
-    eyes_info.open_left = 0.8f;
-    eyes_info.open_right = 0.8f;
+    eyes_info.open_left = 1.2f;
+    eyes_info.open_right = 1.2f;
     eyes_info.lid_in_left = 0.0f;
     eyes_info.lid_in_right = 0.0f;
     eyes_info.lid_out_left = 0.0f;
@@ -28,51 +32,46 @@ FaceMenu::FaceMenu()
     setBehavior(Behavior_Idle);
 }
 
-FaceMenu::~FaceMenu()
+MenuFace::~MenuFace()
 {
 }
 
-void FaceMenu::setMainMenu(Menu* main_menu)
-{
-    parent = main_menu; // note : using Menu::parent as pointer on main menu
-}
-
-void FaceMenu::setBehavior(BehaviorFunction behavior)
+void MenuFace::setBehavior(BehaviorFunction behavior)
 {
     m_behavior = behavior;
 }
 
-void FaceMenu::onBack()
+bool MenuFace::onBack()
 {
-    if (parent) // note : using Menu::parent as pointer on main menu
-    {
-        Menus::SetCurrentMenu(parent);
-        m_need_render = true;
-    }
+    Menus::SetCurrentMenu(&menuMain);
+    return true;
 }
 
-void FaceMenu::onSelect()
+bool MenuFace::onSelect()
 {
-    if (parent) // note : using Menu::parent as pointer on main menu
-    {
-        Menus::SetCurrentMenu(parent);
-        m_need_render = true;
-    }
+    Menus::SetCurrentMenu(&menuMain);
+    return true;
 }
 
-void FaceMenu::onNext()
+bool MenuFace::onNext()
 {
+    return false;
 }
 
-void FaceMenu::onPrev()
+bool MenuFace::onPrev()
 {
+    return false;
 }
 
-void FaceMenu::onCreate()
+void MenuFace::onShow()
 {
 }
 
-void FaceMenu::onRender()
+void MenuFace::onHide()
+{
+}
+
+void MenuFace::onRender()
 {
     // Note : doing update here not to use power if not rendering
 
@@ -88,7 +87,6 @@ void FaceMenu::onRender()
     float look_x_right = -(-base_infos.look_x*2 - base_infos.look_x*base_infos.look_x);
     float look_x_left = base_infos.look_x*2 - base_infos.look_x*base_infos.look_x;
     
-    ScreenDriver::Clear();
     Draw::RectRounded( // right eye white
         ScreenDriver::info.width / 4  + look_x_right * 10.0f - m_eyes_size / 2,
         ScreenDriver::info.height / 2 + base_infos.look_y * 10.0f - (m_eyes_size * base_infos.open_right) / 2 - base_infos.skew * 5.0f,
@@ -160,13 +158,11 @@ void FaceMenu::onRender()
         ScreenDriver::info.height / 2    + base_infos.look_y * 10.0f + (m_eyes_size * base_infos.open_left) / 2 + base_infos.skew * 5.0f - (base_infos.lid_bottom_left * m_eyes_size * base_infos.open_left),
         ScreenDriver::COLOR_BLACK
     );
-
-    ScreenDriver::Upload();
 }
 
-void FaceMenu::onUpdate()
+void MenuFace::onUpdate()
 {
-    m_need_render = true; // always need render to update eyes
+    triggerRender(); // always need render to update eyes
 }
 
 
@@ -183,7 +179,7 @@ float last_look_y_shift = 0.0f;
 float look_x_shift = 0.0f;
 float look_y_shift = 0.0f;
 
-void Behavior_Idle(FaceEyesInfo& eyes_info, uint32_t time_ms)
+void Behavior_Blink(FaceEyesInfo& eyes_info, uint32_t time_ms)
 {
     // Blink every 3 to 7 seconds
     if (!is_blinking && (time_ms - last_blink_time) > blink_wait_time)
@@ -220,6 +216,11 @@ void Behavior_Idle(FaceEyesInfo& eyes_info, uint32_t time_ms)
             }
         }
     }
+}
+
+void Behavior_Idle(FaceEyesInfo& eyes_info, uint32_t time_ms)
+{
+    Behavior_Blink(eyes_info, time_ms); // also apply blinking in idle behavior
 
     // Move eyes every 1 to 5 seconds
     if ((time_ms - last_look_move) > look_move_wait_time)

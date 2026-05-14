@@ -1,5 +1,7 @@
 #include "network/NetworkManager.hpp"
-#include "network/Protocol.hpp"
+#include "network/protocol/Protocol.hpp"
+#include "common/Log.hpp"
+#include "Robot.hpp"
 
 NetworkManager::NetworkManager()
 {
@@ -7,6 +9,8 @@ NetworkManager::NetworkManager()
 
 Error NetworkManager::init()
 {
+    LOG_SCOPE(TAG, "NetworkManager::init");
+
     // Initialize the WiFi manager
     if (Error err = wifi_manager.init(); err != Error::None)
     {
@@ -31,8 +35,15 @@ Error NetworkManager::init()
         return err;
     }
 
-    // Initialize the protocol layer
-    if (Error err = protocol.init(); err != Error::None)
+    // Initialize the protocol system
+    if (Error err = Protocol::Init(); err != Error::None)
+    {
+        return err;
+    }
+
+    // Initialize the camera server
+    // FIXME : The method name shouldn't be start but something like initServer
+    if (Error err = Robot::GetInstance().getUIManager().getCamera().start(); err != Error::None)
     {
         return err;
     }
@@ -42,8 +53,8 @@ Error NetworkManager::init()
 
 Error NetworkManager::deinit()
 {
-    // Deinitialize the protocol layer
-    if (Error err = protocol.deinit(); err != Error::None)
+    // Deinitialize the protocol system
+    if (Error err = Protocol::Deinit(); err != Error::None)
     {
         return err;
     }

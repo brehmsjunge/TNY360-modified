@@ -4,11 +4,12 @@
 #include "network/WebInterface.hpp"
 #include "network/WebSocket.hpp"
 #include "network/UpdateManager.hpp"
-#include "network/Protocol.hpp"
 
 class NetworkManager
 {
 public:
+    constexpr static const char* TAG = "NetworkManager";
+
     NetworkManager();
 
     /**
@@ -42,12 +43,6 @@ public:
     WebSocket& getWebSocket() { return web_socket; }
 
     /**
-     * @brief Get the network's protocol manager.
-     * @return Reference to the Protocol.
-     */
-    Protocol& getProtocol() { return protocol; }
-
-    /**
      * @brief Get the network's update manager.
      * @return Reference to the UpdateManager.
      */
@@ -58,5 +53,4 @@ private:
     WebInterface web_interface;
     WebSocket web_socket;
     UpdateManager update_manager;
-    Protocol protocol;
 };

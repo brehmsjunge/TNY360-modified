@@ -17,11 +17,14 @@ namespace MotorDriver
 
     Error Init()
     {
+        LOG_SCOPE(TAG, "MotorDriver::Init");
+
         if (initialized) return Error::None;
 
         if (Error err = I2C::Init(); err != Error::None)
         {
-            Log::Add(Log::Level::Error, TAG, "Failed to initialize I2C for motor driver");
+            LOG_ERROR(TAG, "Failed to initialize I2C for motor driver");
+            ErrorHandle(ErrorStruct::DriverInitFailed);
             return err;
         }
 
@@ -29,12 +32,24 @@ namespace MotorDriver
         {
             pca9685_info_t pca_info = {
                 .address = MOTOR_DRIVER_I2C_ADDR,
-                .clock_speed = MOTOR_DRIVER_I2C_CLOCK
+                .clock_speed = 1'000'000, // Fast-mode+ (1Mhz)
             };
             esp_err_t err = pca9685_create(I2C::handle_primary, pca_info, &pca_handle);
             if (err != ESP_OK)
             {
-                Log::Add(Log::Level::Error, TAG, "Failed to create PCA9685 handle");
+                LOG_ERROR(TAG, "Failed to create PCA9685 handle");
+                ErrorHandle(ErrorStruct::DriverInitFailed);
+                return Error::HardwareFailure;
+            }
+        }
+
+        // Reset PCA9685 to ensure it's in a known state
+        {
+            esp_err_t err = pca9685_reset(pca_handle);
+            if (err != ESP_OK)
+            {
+                LOG_ERROR(TAG, "Failed to reset PCA9685");
+                ErrorHandle(ErrorStruct::DriverInitFailed);
                 return Error::HardwareFailure;
             }
         }
@@ -47,7 +62,8 @@ namespace MotorDriver
             esp_err_t err = pca9685_config(pca_handle, pca_config);
             if (err != ESP_OK)
             {
-                Log::Add(Log::Level::Error, TAG, "Failed to configure PCA9685");
+                LOG_ERROR(TAG, "Failed to configure PCA9685");
+                ErrorHandle(ErrorStruct::DriverInitFailed);
                 return Error::HardwareFailure;
             }
         }
@@ -57,7 +73,8 @@ namespace MotorDriver
             esp_err_t err = pca9685_wake_up(pca_handle);
             if (err != ESP_OK)
             {
-                Log::Add(Log::Level::Error, TAG, "Failed to wake up PCA9685");
+                LOG_ERROR(TAG, "Failed to wake up PCA9685");
+                ErrorHandle(ErrorStruct::DriverInitFailed);
                 return Error::HardwareFailure;
             }
         }
@@ -83,19 +100,19 @@ namespace MotorDriver
     {
         if (!initialized)
         {
-            Log::Add(Log::Level::Error, TAG, "MotorDriver not initialized");
+            LOG_ERROR(TAG, "MotorDriver not initialized");
             return Error::InvalidState;
         }
 
         if (id >= CHANNEL_COUNT)
         {
-            Log::Add(Log::Level::Error, TAG, "Invalid motor ID: %d", id);
+            LOG_ERROR(TAG, "Invalid motor ID: %d", id);
             return Error::InvalidParameters;
         }
 
         if (pwm > 4096)
         {
-            Log::Add(Log::Level::Error, TAG, "Invalid PWM value: %d", pwm);
+            LOG_ERROR(TAG, "Invalid PWM value: %d", pwm);
             return Error::InvalidParameters;
         }
 
@@ -107,13 +124,13 @@ namespace MotorDriver
     {
         if (!initialized)
         {
-            Log::Add(Log::Level::Error, TAG, "MotorDriver not initialized");
+            LOG_ERROR(TAG, "MotorDriver not initialized");
             return Error::InvalidState;
         }
 
         if (id >= CHANNEL_COUNT)
         {
-            Log::Add(Log::Level::Error, TAG, "Invalid motor ID: %d", id);
+            LOG_ERROR(TAG, "Invalid motor ID: %d", id);
             return Error::InvalidParameters;
         }
 
@@ -125,32 +142,25 @@ namespace MotorDriver
     {
         if (!initialized)
         {
-            Log::Add(Log::Level::Error, TAG, "MotorDriver not initialized");
+            LOG_ERROR(TAG, "MotorDriver not initialized");
             return Error::InvalidState;
         }
 
         memset(pwm_buffer, 0, sizeof(pwm_buffer));
 
         // this is generally called when something bad happened, so we send the values immediately
-        __ISRSendValues();
+        SendData();
 
         return Error::None;
     }
     
-    void __ISRSendValues()
+    Error SendData()
     {
-        // for (int i = 0; i < static_cast<int>(CHANNEL_COUNT); i++)
-        // {
-        //     if (pca9685_set_pwm(pca_handle, i, pwm_buffer[i]) != ESP_OK)
-        //     {
-        //         Log::Add(Log::Level::Error, TAG, "Failed to set PWM for motor %d", i);
-        //     }
-        // }
-
         if (pca9685_set_pwms(pca_handle, pwm_buffer) != ESP_OK)
         {
-            Log::Add(Log::Level::Error, TAG, "Failed to set PWM values");
+            LOG_ERROR(TAG, "Failed to set PWM values");
+            return Error::HardwareFailure;
         }
-        // TODO : We should use the above function once it's fixed in the PCA9685 driver
+        return Error::None;
     }
 }

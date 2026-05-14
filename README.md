@@ -1,4 +1,4 @@
-![Banner](./extras/banner.png)
+![Banner](./Extras/banner.png)
 
 <div align="center">
 
@@ -10,7 +10,7 @@
 
 **A compact, open-source robot dog designed to *Understand*, *Interact*, and *Learn*.**
 
-[🌐 Website](https://tny-robotics.com/tny-360) • [📸 Instagram](https://instagram.com/furwaz_) • [💬 Discord](https://discord.gg/XGABkx5A4y)
+[🌐 Website](https://tny-robotics.com/tny-360) • [📸 Instagram](https://instagram.com/furwaz_) • [💬 Discord](https://discord.gg/XGABkx5A4y) • [📖 Documentation](https://tny-robotics.com/docs/tny-360/)
 
 </div>
 
@@ -21,22 +21,32 @@
 Everything you need to build the TNY-360 is completely free and open-source.
 Follow the links below to find the technical files and documentation you need to get started!
 
-| Resource | Description | Location | Status |
-| :--- | :--- | :--- | :--- |
-| **💻 Firmware** | ESP-IDF source code and drivers. | [`/Firmware`](./Firmware) | **Available** |
-| **📐 CAD & 3D Files** | FreeCAD source files and STLs. | [`/CAD`](./CAD) | **Available** |
-| **📘 Servo Mod Guide** | Instructions to add position feedback to MG996R. | [`/Docs/Servos`](./Docs/Servos) | *Coming Soon* |
-| **📖 Assembly Guide** | Step-by-step manual for the full build. | [`/Docs/Assembly`](./Docs/Assembly) | *Coming Soon* |
-| **⚡ PCB Design** | All PCBs Gerber, BOM, and Pick'n'Place files. | [`/Electronics/PCBs`](./Electronics/PCBs) | **Available** |
----
+| Resource                | Description                                               | Location                                                                                       |
+| :---------------------- | :-------------------------------------------------------- | :--------------------------------------------------------------------------------------------- |
+| **💻 Firmware**        | ESP-IDF source code and drivers.                          | [`/Firmware`](./Firmware)                                                                      |
+| **📐 CAD & 3D Files**  | FreeCAD source files and STLs.                            | [`/CAD`](./CAD)                                                                                |
+| **📘 Servo Mod Guide** | Discover the Op-Amp buffer trick and mod your MG996R.     | [📖 Read Documentation](https://tny-robotics.com/docs/tny-360/anatomy/electronics/mg996r-mod) |
+| **📖 Assembly Guide**  | Full visual build manual, from PCB wiring to calibration. | [📖 Read Documentation](https://tny-robotics.com/docs/tny-360/practical-guide/)               |
+| **⚡ PCB Design**       | All PCBs Gerber, BOM, and Pick'n'Place files.             | [`/Electronics/PCBs`](./Electronics/PCBs)                                                      |
+
 
 ## ✨ Features
 
-* **🦾 High-Performance Motion:** 12 DOF (Degrees of Freedom) using modified servos with position feedback.
-* **🧠 AI-Ready Brain:** Powered by the **ESP32-S3 N16R8** for edge computing and Wi-Fi/BLE connectivity.
-* **👀 Computer Vision:** Integrated camera (OV2640) for object tracking.
-* **🗣️ Interaction:** Features an OLED face, microphone, and speaker for full HRI (Human-Robot Interaction).
-* **🛠️ Fully Modifiable:** 100% 3D-printable chassis designed in **FreeCAD** (source files included).
+* 🧬 **Dual-Core Architecture:** A segregated system using the ESP32-S3. Core 0 ("Reflex") runs a strict 200Hz kinematics/control loop, while Core 1 ("Brain") handles WebSockets, UI, and orchestration.
+* 🔄 **Closed-Loop at 200Hz:** We ditched blind PWM. The TNY-360 uses digital MG996R servos modified with a custom **Op-Amp buffer PCB** for noise-free, high-speed position feedback.
+* ⚡ **Zero Cable Spaghetti:** A fully modular hardware ecosystem. Dedicated PCBs (Control, Sensor, Brain, Power, etc.) communicate cleanly via standardized JST-PH cables.
+* 🛠️ **Smart Auto-Calibration:** Features mechanical endstops for assembly validation and runtime algorithms that compensate for backlash and actuator latency.
+* 🧩 **STEM & Expansion Ready:** Program the robot using [TNY-Coder](https://github.com/TNY-Robotics/TNY-Coder) (our block-based web app) or build custom hardware modules using the dorsal I2C/Power expansion port.
+* 🔋 **Industrial Power:** A custom 3S 18650 battery pack capable of 15A continuous discharge, featuring an integrated BMS and Fuse, for 1h+ of runtime.
+
+## 🧠 The Engineering: Beyond a Budget Robot
+
+Most budget quadrupeds suffer from analog noise and jitter when hacking servos for feedback. Simply soldering a wire to a servo's internal potentiometer creates an antenna for EMI and draws current that destabilizes the servo's internal control loop.
+
+**The TNY-360 Solution:** We designed a custom micro-PCB that fits inside the servo, featuring an **Operational Amplifier (Op-Amp) in a voltage follower (buffer) configuration**. 
+This provides near-infinite input impedance (zero interference with the motor) and low output impedance to send a clean analog signal over the robot's wiring harness. Coupled with a software low-pass filter, the ESP32 can cleanly poll all 12 legs at 200Hz.
+
+👉 **[Read the full technical deep-dive and the step-by-step Servo Modding Guide on our documentation site.](https://tny-robotics.com/docs/tny-360/anatomy/electronics/mg996r-mod)**
 
 ## ⚙️ Hardware Specs
 
@@ -59,30 +69,11 @@ Follow the links below to find the technical files and documentation you need to
 
 ---
 
-## 💻 Firmware Quick Start
-
-The firmware is built on **PlatformIO** using the **ESP-IDF** framework.
-
-### Prerequisites
-1.  **VS Code** installed.
-2.  **PlatformIO** extension installed in VS Code.
-
-### Installation
-1.  **Clone** this repository:
-    ```bash
-    git clone --recursive https://github.com/TNY-Robotics/TNY-360.git
-    ```
-2.  **Open** the `Firmware/` folder in VS Code.
-3.  **Connect** your ESP32-S3 via USB.
-4.  **Upload:** Click the generic "Arrow" icon (➡️) in the PlatformIO bottom bar to Build & Flash.
-
-> **Note:** If you are missing drivers, run `git submodule update --init --recursive` to pull the TNY-Robotics custom components.
-
----
-
 ## 📂 Repository Structure
 
+* `BOM/` — **Bill of Materials.** Detailed lists of all components, PCBs, screws, and cables, with links.
 * `CAD/` — **Hardware Source.** FreeCAD project files and ready-to-print STLs.
+* `Electronics/PCBs/` — **PCB Designs.** Gerber files, BOMs, and Pick'n'Place for all PCBs.
 * `Firmware/` — **Codebase.** PlatformIO project (C++/ESP-IDF).
 * `Firmware/components/` — **Drivers.** Custom libraries for sensors/actuators.
 

@@ -5,15 +5,26 @@
 
 namespace IPC
 {
+    // NOTE : Using DRAM_ATTR to make sure the control loop won't be blocked by cache issues when accessing the queues
+    //        (on high wifi usage or other flash access heavy operations)
+    DRAM_ATTR static uint8_t intent_queue_buffer[sizeof(ControlIntent)];
+    DRAM_ATTR static StaticQueue_t intent_queue_struct;
     QueueHandle_t intent_queue = nullptr;
+    DRAM_ATTR static uint8_t state_queue_buffer[sizeof(RobotState)];
+    DRAM_ATTR static StaticQueue_t state_queue_struct;
+    QueueHandle_t state_queue = nullptr;
 
     Error Init()
     {
-        intent_queue = xQueueCreate(1, sizeof(ControlIntent));
+        LOG_SCOPE(TAG, "IPC::Init");
+        
+        intent_queue = xQueueCreateStatic(1, sizeof(ControlIntent), intent_queue_buffer, &intent_queue_struct);
+        state_queue = xQueueCreateStatic(1, sizeof(RobotState), state_queue_buffer, &state_queue_struct);
 
-        if (intent_queue == nullptr)
+        if (intent_queue == nullptr || state_queue == nullptr)
         {
-            Log::Add(Log::Level::Error, TAG, "Failed to create intent queue");
+            LOG_ERROR(TAG, "Failed to create queues for IPC");
+            ErrorHandle(ErrorStruct::IPCInitFailed);
             return Error::SoftwareFailure;
         }
 
@@ -29,7 +40,7 @@ namespace IPC
     {
         if (xQueueOverwrite(intent_queue, &intent) != pdPASS)
         {
-            Log::Add(Log::Level::Error, TAG, "Couldn't override intent in the intent queue");
+            LOG_ERROR(TAG, "Couldn't override intent in the intent queue");
             return Error::SoftwareFailure;
         }
         return Error::None;
@@ -38,5 +49,20 @@ namespace IPC
     bool getIntent(ControlIntent* intent)
     {
         return (xQueueReceive(intent_queue, intent, 0) == pdTRUE);
+    }
+
+    Error setState(RobotState& state)
+    {
+        if (xQueueOverwrite(state_queue, &state) != pdPASS)
+        {
+            LOG_ERROR(TAG, "Couldn't override state in the state queue");
+            return Error::SoftwareFailure;
+        }
+        return Error::None;
+    }
+
+    bool getState(RobotState* state)
+    {
+        return (xQueueReceive(state_queue, state, 0) == pdTRUE);
     }
 };

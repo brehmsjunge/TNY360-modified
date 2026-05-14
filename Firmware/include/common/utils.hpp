@@ -2,6 +2,7 @@
 #include <cstdint>
 #include <cstddef>
 #include "esp_timer.h"
+#include "common/ErrorCode.hpp"
 
 enum class Error: uint8_t {
     None = 0,          // No error
@@ -14,29 +15,43 @@ enum class Error: uint8_t {
     SoftwareFailure,   // Used when a software component fails
     Unreachable,       // Used when a target is unreachable
     OutOfBounds,       // Used when an operation goes out of defined bounds
-    OutOfMemory
+    OutOfMemory,       // Used when memory allocation fails
+    NetworkFailure     // Used when a network operation fails
 };
+
+// Helper macro to return early on error. Usage:
+// RETURN_ERROR(SomeFunction());
+#define RETURN_ERROR(x) if (Error err = (x); err != Error::None) return err;
 
 const char* ErrorToString(Error err);
 
-struct PerfMonitor {
+void ErrorHandle(ErrorStruct::ErrorStruct err);
+
+struct PerfMonitor
+{
+    uint32_t iterations = 0;
     int64_t start_time = 0;
     int64_t total_time = 0;
 
-    inline void start() {
+    inline void start()
+    {
         start_time = esp_timer_get_time();
     }
 
-    inline void stop() {
+    inline void stop()
+    {
         total_time += (esp_timer_get_time() - start_time);
+        iterations++;
     }
 
-    inline void reset() {
+    inline void reset()
+    {
         total_time = 0;
+        iterations = 0;
     }
     
-    // Retourne la moyenne en millisecondes
-    inline float get_avg_ms(int iterations) {
+    inline float get_avg_ms()
+    {
         return (float)total_time / (iterations * 1000.0f);
     }
 };

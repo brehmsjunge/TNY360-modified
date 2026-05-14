@@ -1,5 +1,7 @@
 #pragma once
 #include "utils.hpp"
+#include <stdio.h>
+#include <sys/stat.h>
 
 namespace LittleFS
 {

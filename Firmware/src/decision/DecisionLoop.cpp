@@ -5,6 +5,8 @@
 
 Error DecisionLoop::init()
 {
+    // ErrorHandle(ErrorStruct::DecisionLoopInitFailed);
+    // FIXME : Maybe we should create the task here and just keep it suspended until start() is called
     return Error::None;
 }
 
@@ -21,12 +23,14 @@ Error DecisionLoop::deinit()
 
 Error DecisionLoop::start()
 {
-    if (xTaskCreatePinnedToCore([](void* pvParams){
+    BaseType_t err = xTaskCreatePinnedToCore([](void* pvParams){
         DecisionLoop* decision_loop = (DecisionLoop*) pvParams;
         decision_loop->decision_loop();
-    }, "DecisionLoop_Core0", 8192, this, tskIDLE_PRIORITY + 10, &decision_loop_task, CORE_BRAIN) != pdPASS)
+    }, "DecisionLoop_Core0", 8192, this, tskIDLE_PRIORITY + 10, &decision_loop_task, CORE_BRAIN);
+
+    if (err != pdPASS)
     {
-        Log::Add(Log::Level::Error, TAG, "Error creating DecisionLoop task");
+        LOG_ERROR(TAG, "Error creating DecisionLoop task");
         return Error::Unknown;
     }
 
@@ -43,9 +47,63 @@ Error DecisionLoop::stop()
     return Error::None;
 }
 
-void DecisionLoop::setBodyVelocity(Vec3f vel)
+Error DecisionLoop::setAutoLifeLevel(uint8_t level)
 {
-    intent.body_vel = vel;
+    if (level > AutoLifeLevel::Full)
+    {
+        return Error::InvalidParameters;
+    }
+    auto_life_level = level;
+    // TODO : Implement real auto life logic and all
+    return Error::None;
+}
+
+Error DecisionLoop::askBodyVelocity(float x_ms, float y_ms, float z_rads)
+{
+    last_ask_timestamp_ms = esp_log_timestamp();
+    askedBodyVel = {x_ms, y_ms, z_rads};
+    return Error::None;
+}
+
+Error DecisionLoop::askBodyRotation(float x_rad, float y_rad, float z_rad)
+{
+    last_ask_timestamp_ms = esp_log_timestamp();
+    askedBodyRot = {x_rad, y_rad, z_rad};
+    return Error::None;
+}
+
+Error DecisionLoop::askBodyPosition(float x_m, float y_m, float z_m)
+{
+    last_ask_timestamp_ms = esp_log_timestamp();
+    askedBodyPos = {x_m, y_m, z_m};
+    return Error::None;
+}
+
+Error DecisionLoop::askLegPosition(Leg::Id leg_id, float x_m, float y_m, float z_m, IPC::OverrideMode mode)
+{
+    last_ask_timestamp_ms = esp_log_timestamp();
+    askedLegOverrides[(int) leg_id].mode = mode;
+    askedLegOverrides[(int) leg_id].value_pos = {x_m, y_m, z_m};
+    return Error::None;
+}
+
+Error DecisionLoop::askGaitType(GaitPlanner::GaitType gait)
+{
+    last_ask_timestamp_ms = esp_log_timestamp();
+    askedGait = gait;
+    return Error::None;
+}
+
+Error DecisionLoop::askJointAngle(Joint::Id joint_id, float angle_rad, IPC::OverrideMode mode)
+{
+    last_ask_timestamp_ms = esp_log_timestamp();
+    if (joint_id >= Joint::Id::Count)
+    {
+        return Error::InvalidParameters;
+    }
+    askedJointAngles[(int) joint_id].mode = mode;
+    askedJointAngles[(int) joint_id].value_rad = angle_rad;
+    return Error::None;
 }
 
 void DecisionLoop::decision_loop()
@@ -56,14 +114,40 @@ void DecisionLoop::decision_loop()
 
     while (loop_running)
     {
-
-        // Update timestamp and send intent to REFLEX core
-        intent.timestamp_ms = esp_log_timestamp();
-        if (IPC::setIntent(intent) != Error::None)
+        // Get the robot state from the Reflex core
+        if (!IPC::getState(&state))
         {
-            Log::Add(Log::Level::Warning, TAG, "Failed to send intent to Reflex core");
+            // LOG_WARNING(TAG, "Failed to get robot state from Reflex core");
         }
 
+        // Update decision logic
+        update(DECISION_LOOP_DT_MS / 1000.f, state);
+
+        // Build final intent object (fusion between asked intents and own intent)
+        // First fill it with the asked intents, and then override based on auto life level and safeguards
+        IPC::ControlIntent final_intent;
+        final_intent.body_vel = askedBodyVel;
+        final_intent.body_rot = askedBodyRot;
+        final_intent.body_pos = askedBodyPos;
+        final_intent.gait = askedGait;
+        for (int i = 0; i < (int) Joint::Id::Count; i++)
+        {
+            final_intent.joint_overrides[i] = askedJointAngles[i];
+        }
+        for (int i = 0; i < (int) Leg::Id::Count; i++)
+        {
+            final_intent.leg_overrides[i] = askedLegOverrides[i];
+        }
+        // Then override with auto life features
+        fillIntent(final_intent, state);
+
+        // Update timestamp and send intent to Reflex core
+        final_intent.timestamp_ms = esp_log_timestamp();
+        if (IPC::setIntent(final_intent) != Error::None)
+        {
+            LOG_WARNING(TAG, "Failed to send intent to Reflex core");
+        }
+        intent = final_intent; // store that for getters
         vTaskDelayUntil(&xLastWakeTime, xFrequency);
     }
 

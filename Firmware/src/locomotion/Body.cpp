@@ -1,79 +1,74 @@
 #include "locomotion/Body.hpp"
 #include "common/config.hpp"
 #include "common/Log.hpp"
+#include "drivers/PowerDriver.hpp"
 #include "common/RPC.hpp"
 #include "locomotion/IPC.hpp"
 
 Body::Body()
 {
     // Create the 4 legs
-    legs[static_cast<size_t>(LegIndex::FRONT_LEFT)] = Leg(
-        Joint(MotorController( 7,  9), DEG_TO_RAD( -45.0f), DEG_TO_RAD( 45.0f), false),  // Hip Roll
-        Joint(MotorController( 5, 11), DEG_TO_RAD(-135.0f), DEG_TO_RAD( 45.0f), true ),  // Hip Pitch
-        Joint(MotorController( 6, 10), DEG_TO_RAD(   0.0f), DEG_TO_RAD(150.0f), false),  // Knee Pitch
-        true
+    legs[static_cast<size_t>(Leg::Id::FrontLeft)] = Leg(
+        Joint(Joint::Id::FrontLeftHipRoll, MotorController( 2,  0), DEG_TO_RAD( -45.0f), DEG_TO_RAD( 45.0f), false),  // Hip Roll
+        Joint(Joint::Id::FrontLeftHipPitch, MotorController( 3,  1), DEG_TO_RAD(-135.0f), DEG_TO_RAD( 45.0f), true ),  // Hip Pitch
+        Joint(Joint::Id::FrontLeftKneePitch, MotorController( 4,  2), DEG_TO_RAD(   0.0f), DEG_TO_RAD(150.0f), false),  // Knee Pitch
+        3, true
     );
-    legs[static_cast<size_t>(LegIndex::FRONT_RIGHT)] = Leg(
-        Joint(MotorController( 4, 13), DEG_TO_RAD( -45.0f), DEG_TO_RAD( 45.0f), true ),  // Hip Roll
-        Joint(MotorController( 2, 15), DEG_TO_RAD(-135.0f), DEG_TO_RAD( 45.0f), false),  // Hip Pitch
-        Joint(MotorController( 3, 14), DEG_TO_RAD(   0.0f), DEG_TO_RAD(150.0f), true ),  // Knee Pitch
-        false
+    legs[static_cast<size_t>(Leg::Id::BackLeft)] = Leg(
+        Joint(Joint::Id::BackLeftHipRoll, MotorController( 5,  4), DEG_TO_RAD( -45.0f), DEG_TO_RAD( 45.0f), true ),  // Hip Roll
+        Joint(Joint::Id::BackLeftHipPitch, MotorController( 6,  5), DEG_TO_RAD(-135.0f), DEG_TO_RAD( 45.0f), true ),  // Hip Pitch
+        Joint(Joint::Id::BackLeftKneePitch, MotorController( 7,  6), DEG_TO_RAD(   0.0f), DEG_TO_RAD(150.0f), false),  // Knee Pitch
+        7, true
     );
-    legs[static_cast<size_t>(LegIndex::BACK_LEFT)] = Leg(
-        Joint(MotorController(10,  5), DEG_TO_RAD( -45.0f), DEG_TO_RAD( 45.0f), true ),  // Hip Roll
-        Joint(MotorController( 8,  7), DEG_TO_RAD(-135.0f), DEG_TO_RAD( 45.0f), true ),  // Hip Pitch
-        Joint(MotorController( 9,  6), DEG_TO_RAD(   0.0f), DEG_TO_RAD(150.0f), false),  // Knee Pitch
-        true
+    legs[static_cast<size_t>(Leg::Id::BackRight)] = Leg(
+        Joint(Joint::Id::BackRightHipRoll, MotorController( 8,  8), DEG_TO_RAD( -45.0f), DEG_TO_RAD( 45.0f), false),  // Hip Roll
+        Joint(Joint::Id::BackRightHipPitch, MotorController( 9,  9), DEG_TO_RAD(-135.0f), DEG_TO_RAD( 45.0f), false),  // Hip Pitch
+        Joint(Joint::Id::BackRightKneePitch, MotorController(10,  10), DEG_TO_RAD(   0.0f), DEG_TO_RAD(150.0f), true ),  // Knee Pitch
+        11, false
     );
-    legs[static_cast<size_t>(LegIndex::BACK_RIGHT)] = Leg(
-        Joint(MotorController(13,  1), DEG_TO_RAD( -45.0f), DEG_TO_RAD( 45.0f), false),  // Hip Roll
-        Joint(MotorController(11,  3), DEG_TO_RAD(-135.0f), DEG_TO_RAD( 45.0f), false),  // Hip Pitch
-        Joint(MotorController(12,  2), DEG_TO_RAD(   0.0f), DEG_TO_RAD(150.0f), true ),  // Knee Pitch
-        false
+    legs[static_cast<size_t>(Leg::Id::FrontRight)] = Leg(
+        Joint(Joint::Id::FrontRightHipRoll, MotorController(11, 12), DEG_TO_RAD( -45.0f), DEG_TO_RAD( 45.0f), true ),  // Hip Roll
+        Joint(Joint::Id::FrontRightHipPitch, MotorController(12, 13), DEG_TO_RAD(-135.0f), DEG_TO_RAD( 45.0f), false),  // Hip Pitch
+        Joint(Joint::Id::FrontRightKneePitch, MotorController(13, 14), DEG_TO_RAD(   0.0f), DEG_TO_RAD(150.0f), true ),  // Knee Pitch
+        15, false
     );
 
     // Create the ears (default calib is for MG996R, using SG90 for ears)
-    ear_l = Joint(MotorController(1, 0, MotorController::DEFAULT_CALIBRATION_SG90), DEG_TO_RAD(0.0f), DEG_TO_RAD(180.0f), true, false);
-    ear_r = Joint(MotorController(0, 0, MotorController::DEFAULT_CALIBRATION_SG90), DEG_TO_RAD(0.0f), DEG_TO_RAD(180.0f), false, false);
-
-    // Set the default posture and kinematic parameters
-    local_hip_positions_mm[static_cast<size_t>(LegIndex::FRONT_LEFT)] = Vec3f( HIP_POS_X_MM,  HIP_POS_Y_MM, 0.f); // Front Left
-    local_hip_positions_mm[static_cast<size_t>(LegIndex::FRONT_RIGHT)] = Vec3f( HIP_POS_X_MM, -HIP_POS_Y_MM, 0.f); // Front Right
-    local_hip_positions_mm[static_cast<size_t>(LegIndex::BACK_LEFT)] = Vec3f(-HIP_POS_X_MM,  HIP_POS_Y_MM, 0.f); // Back Left
-    local_hip_positions_mm[static_cast<size_t>(LegIndex::BACK_RIGHT)] = Vec3f(-HIP_POS_X_MM, -HIP_POS_Y_MM, 0.f); // Back Right
-
-    // feet positions
-    global_feet_positions_mm[static_cast<size_t>(LegIndex::FRONT_LEFT)] = Vec3f( DEFAULT_FEET_SPREAD_X_MM,  DEFAULT_FEET_SPREAD_Y_MM, 0.f); // Front Left
-    global_feet_positions_mm[static_cast<size_t>(LegIndex::FRONT_RIGHT)] = Vec3f( DEFAULT_FEET_SPREAD_X_MM, -DEFAULT_FEET_SPREAD_Y_MM, 0.f); // Front Right
-    global_feet_positions_mm[static_cast<size_t>(LegIndex::BACK_LEFT)] = Vec3f(-DEFAULT_FEET_SPREAD_X_MM,  DEFAULT_FEET_SPREAD_Y_MM, 0.f); // Back Left
-    global_feet_positions_mm[static_cast<size_t>(LegIndex::BACK_RIGHT)] = Vec3f(-DEFAULT_FEET_SPREAD_X_MM, -DEFAULT_FEET_SPREAD_Y_MM, 0.f); // Back Right
+    ear_r = Joint(Joint::Id::EarRight, MotorController(0, 0, MotorController::MOTOR_ATTR_SG90), DEG_TO_RAD(0.0f), DEG_TO_RAD(180.0f), false, false);
+    ear_l = Joint(Joint::Id::EarLeft, MotorController(1, 0, MotorController::MOTOR_ATTR_SG90), DEG_TO_RAD(0.0f), DEG_TO_RAD(180.0f), true, false);
 }
 
 Error Body::init()
 {
-    Error err;
+    LOG_SCOPE(TAG, "Body::Init");
 
     // Initialize the legs
-    for (size_t i = 0; i < static_cast<size_t>(LegIndex::COUNT); i++)
+    for (size_t i = 0; i < static_cast<size_t>(Leg::Id::Count); i++)
     {
-        if ((err = legs[i].init()) != Error::None)
+        if (Error err = legs[i].init(); err != Error::None)
         {
             return err;
         }
     }
-    
+
     // Initialize the ears
-    if ((err = ear_l.init()) != Error::None)
+    if (Error err = ear_l.init(); err != Error::None)
     {
         return err;
     }
-    if ((err = ear_r.init()) != Error::None)
+    if (Error err = ear_r.init(); err != Error::None)
     {
         return err;
     }
 
     // Initialize the IMU
-    if ((err = imu.init()) != Error::None)
+    if (Error err = imu.init(); err != Error::None)
+    {
+        return err;
+    }
+
+    // Initialize the PowerDriver
+    if (Error err = PowerDriver::Init(); err != Error::None)
     {
         return err;
     }
@@ -90,23 +85,11 @@ Error Body::init()
         return err;
     }
 
-    // Initialize the control loop
-    if (Error err = control_loop.init(); err != Error::None)
-    {
-        return err;
-    }
-
     return Error::None;
 }
 
 Error Body::deinit()
 {
-    // Deinitialize the control loop
-    if (Error err = control_loop.init(); err != Error::None)
-    {
-        return err;
-    }
-
     // Deinitialize the RPC layer
     if (Error err = RPC::DeInit(); err != Error::None)
     {
@@ -119,8 +102,14 @@ Error Body::deinit()
         return err;
     }
 
+    // Deinitialize the PowerDriver
+    if (Error err = PowerDriver::Deinit(); err != Error::None)
+    {
+        return err;
+    }
+
     // Deinitialize the legs
-    for (size_t i = 0; i < static_cast<size_t>(LegIndex::COUNT); i++)
+    for (size_t i = 0; i < static_cast<size_t>(Leg::Id::Count); i++)
     {
         if (Error err = legs[i].deinit(); err != Error::None)
         {
@@ -147,31 +136,38 @@ Error Body::deinit()
     return Error::None;
 }
 
-Error Body::update()
+Error Body::estimateState(float dt)
+{
+    // update legs
+    for (size_t i = 0; i < static_cast<size_t>(Leg::Id::Count); i++)
+    {
+        if (Error err = legs[i].estimateState(dt); err != Error::None)
+        {
+            return err;
+        }
+    }
+    return Error::None;
+}
+
+Error Body::applyCommand(BodyJointState jointState, float dt)
 {
     Error err;
 
-    // Update the IMU controller
-    if ((err = imu.update()) != Error::None)
-    {
-        return err;
-    }
-
     // update legs
-    for (size_t i = 0; i < static_cast<size_t>(LegIndex::COUNT); i++)
+    for (size_t i = 0; i < static_cast<size_t>(Leg::Id::Count); i++)
     {
-        if ((err = legs[i].update()) != Error::None)
+        if ((err = legs[i].applyCommand(jointState.leg_joints[i], dt)) != Error::None)
         {
             return err;
         }
     }
     
     // update ears
-    if ((err = ear_l.update()) != Error::None)
+    if ((err = ear_l.applyCommand(jointState.ear_l_rad, dt)) != Error::None)
     {
         return err;
     }
-    if ((err = ear_r.update()) != Error::None)
+    if ((err = ear_r.applyCommand(jointState.ear_r_rad, dt)) != Error::None)
     {
         return err;
     }
@@ -183,7 +179,7 @@ Error Body::enable()
     Error err;
 
     // enable legs
-    for (size_t i = 0; i < static_cast<size_t>(LegIndex::COUNT); i++)
+    for (size_t i = 0; i < static_cast<size_t>(Leg::Id::Count); i++)
     {
         if ((err = legs[i].enable()) != Error::None)
         {
@@ -208,7 +204,7 @@ Error Body::disable()
     Error err;
 
     // disable legs
-    for (size_t i = 0; i < static_cast<size_t>(LegIndex::COUNT); i++)
+    for (size_t i = 0; i < static_cast<size_t>(Leg::Id::Count); i++)
     {
         if ((err = legs[i].disable()) != Error::None)
         {
@@ -225,71 +221,5 @@ Error Body::disable()
     {
         return err;
     }
-    return Error::None;
-}
-
-Error Body::setPosture(const Transformf& posture)
-{
-    this->posture = posture; 
-    return apply_posture();
-}
-
-Error Body::getTargetPosture(Transformf& posture) const
-{
-    posture = this->posture;
-    return Error::None;
-}
-
-Error Body::setFeetPosition(LegIndex leg_index, const Vec3f& position)
-{
-    if (leg_index >= LegIndex::COUNT)
-    {
-        return Error::InvalidParameters;
-    }
-    global_feet_positions_mm[static_cast<size_t>(leg_index)] = position;
-    return apply_posture();
-}
-
-Error Body::getFeetPosition(LegIndex leg_index, Vec3f& position) const
-{
-    if (leg_index >= LegIndex::COUNT)
-    {
-        return Error::InvalidParameters;
-    }
-    position = global_feet_positions_mm[static_cast<size_t>(leg_index)];
-    return Error::None;
-}
-
-Error Body::apply_posture()
-{
-    Vec3f targets_for_legs[4];
-    float max_time_s = 0.f;
-
-    for (int i = 0; i < static_cast<int>(LegIndex::COUNT); i++)
-    {
-        Vec3f foot_pos_in_body_frame = posture.worldToLocal(global_feet_positions_mm[i]);
-        targets_for_legs[i] = foot_pos_in_body_frame - local_hip_positions_mm[i];
-        float time_estimate = legs[i].getTimeEstimate(targets_for_legs[i]);
-        if (time_estimate < 0.f)
-        {
-            Log::Add(Log::Level::Error, TAG, "Failed to get time estimate for leg %d", i);
-            return Error::Unknown;
-        }
-        if (time_estimate > max_time_s)
-        {
-            max_time_s = time_estimate;
-        }
-    }
-
-    for (int i = 0; i < static_cast<int>(LegIndex::COUNT); i++)
-    {
-        Error err = legs[i].setTarget_Timed(targets_for_legs[i], max_time_s);
-        if (err != Error::None)
-        {
-            Log::Add(Log::Level::Error, TAG, "Failed to set target for leg %d", i);
-            return err;
-        }
-    }
-
     return Error::None;
 }

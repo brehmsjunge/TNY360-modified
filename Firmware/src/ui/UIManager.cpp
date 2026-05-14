@@ -1,6 +1,8 @@
 #include "ui/UIManager.hpp"
 #include "drivers/ScreenDriver.hpp"
 #include "ui/Menus.hpp"
+#include "ui/Draw.hpp"
+#include "ui/Icons.hpp"
 #include "common/Log.hpp"
 
 UIManager::UIManager()
@@ -19,6 +21,14 @@ Error UIManager::init()
     {
         return err;
     }
+
+    if (Error err = camera.init(); err != Error::None)
+    {
+        // not critical, we can still use the ui without camera features
+    }
+    
+    // Display splash screen
+    Menus::SetCurrentMenu(Menus::GetMenuSplash());
 
     return Error::None;
 }

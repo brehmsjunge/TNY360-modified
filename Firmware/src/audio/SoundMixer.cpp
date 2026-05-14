@@ -19,14 +19,15 @@ Error SoundMixer::init()
     masterVolume = 0.05f; // default volume
     running = true; // start running
 
-    BaseType_t ret = xTaskCreate([](void* pvParams) {
+    BaseType_t ret = xTaskCreatePinnedToCore([](void* pvParams) {
         SoundMixer* mixer = static_cast<SoundMixer*>(pvParams);
         mixer->__internal_task(nullptr);
-    }, "SoundMixerTask", 4096, this, tskIDLE_PRIORITY + 20, nullptr); // High priority for audio task
+    }, "SoundMixerTask", 4096, this, tskIDLE_PRIORITY + 20, nullptr, CORE_BRAIN); // High priority for audio task
 
     if (ret != pdPASS)
     {
-        Log::Add(Log::Level::Error, TAG, "Failed to create SoundMixer task");
+        LOG_ERROR(TAG, "Failed to create SoundMixer task");
+        ErrorHandle(ErrorStruct::MixerInitFailed);
         return Error::SoftwareFailure;
     }
 
@@ -71,7 +72,7 @@ Error SoundMixer::addSoundProvider(SoundProvider* provider)
             return Error::None;
         }
     }
-    Log::Add(Log::Level::Warning, TAG, "No available slot to add audio provider");
+    LOG_WARNING(TAG, "No available slot to add audio provider");
     return Error::NoMemory;
 }
 

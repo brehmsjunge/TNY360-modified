@@ -12,52 +12,52 @@ public:
     {
         ENABLED = 1,
         DISABLED = 0,
-        ERROR = 2
+        ERROR = 2,
     };
 
     enum class CalibrationState : uint8_t
     {
         UNCALIBRATED = 0,
         CALIBRATING = 1,
-        CALIBRATED = 2
+        CALIBRATED = 2,
+        ERROR = 3,
+    };
+
+    struct MotorAttributes
+    {
+        MotorDriver::Value pwm_min;
+        MotorDriver::Value pwm_max;
+        bool has_feedback;
+    };
+
+    constexpr static MotorAttributes MOTOR_ATTR_MG996R = {
+        .pwm_min = MotorDriver::MS_TO_PWM(0.5f), // 0.5us duty cycle
+        .pwm_max = MotorDriver::MS_TO_PWM(2.5f), // 2.5us duty cycle
+        .has_feedback = true
+    };
+
+    constexpr static MotorAttributes MOTOR_ATTR_SG90 = {
+        .pwm_min = MotorDriver::MS_TO_PWM(1.0f), // 1.0us duty cycle
+        .pwm_max = MotorDriver::MS_TO_PWM(2.0f), // 2.0us duty cycle
+        .has_feedback = false
     };
 
     struct CalibrationData
     {
-        MotorDriver::Value min_pwm;
-        MotorDriver::Value max_pwm;
-        AnalogDriver::Value min_voltage;
-        AnalogDriver::Value max_voltage;
-        AnalogDriver::Value feedback_noise;
-        MotorDriver::Value pwm_deadband;
-        uint16_t feedback_latency_ms;
-    };
-
-    constexpr static CalibrationData DEFAULT_CALIBRATION_MG996R = {
-        .min_pwm = MotorDriver::MS_TO_PWM(0.5f), // 0.5us duty cycle
-        .max_pwm = MotorDriver::MS_TO_PWM(2.5f), // 2.5us duty cycle
-        .min_voltage = 200,  // in mV
-        .max_voltage = 3000, // in mV
-        .feedback_noise = 1, // in mV
-        .pwm_deadband = 1, // in PWM units
-        .feedback_latency_ms = 0 // in ms
-    };
-
-    constexpr static CalibrationData DEFAULT_CALIBRATION_SG90 = {
-        .min_pwm = MotorDriver::MS_TO_PWM(1.0f), // 1.0us duty cycle
-        .max_pwm = MotorDriver::MS_TO_PWM(2.0f), // 2.0us duty cycle
-        .min_voltage = 0,  // in mV | NOTE : NO FEEDBACK ON EARS (SG90)
-        .max_voltage = 0, // in mV  | NOTE : NO FEEDBACK ON EARS (SG90)
-        .feedback_noise = 0, // in mV
-        .pwm_deadband = 0, // in PWM units
-        .feedback_latency_ms = 0 // in ms
+        MotorDriver::Value pwm_min = 0;
+        MotorDriver::Value pwm_max = 0;
+        MotorDriver::Value pwm_deadband = 0;
+        AnalogDriver::Value feedback_min = 0.5f;
+        AnalogDriver::Value feedback_max = 2.8f; // default to 0-3.3V range (with some margin)
+        AnalogDriver::Value feedback_noise = 0;
+        int feedback_latency_ms = 0;
+        bool feedback_inverted = false;
+        float max_speed = 0.f; // in progress per second
     };
 
     MotorController();
     
-    MotorController(MotorDriver::Channel motor_channel, AnalogDriver::Channel analog_channel);
-    
-    MotorController(MotorDriver::Channel motor_channel, AnalogDriver::Channel analog_channel, CalibrationData default_calibration);
+    MotorController(MotorDriver::Channel motor_channel, AnalogDriver::Channel analog_channel, MotorAttributes attribs = MOTOR_ATTR_MG996R);
 
     /**
      * @brief Initialize the motor controller.
@@ -181,23 +181,20 @@ public:
 private:
     MotorDriver::Channel motor_channel;
     AnalogDriver::Channel analog_channel;
-    NVS::Handle* nvshandle_ptr;
+
+    MotorAttributes motor_attributes;
     CalibrationData calibration_data;
-    CalibrationData default_calibration_data;
-    float target_position;
-    State state;
     CalibrationState calibration_state;
     float calibration_progress;
+    
+    State state;
+    float target_position = 0;
+    NVS::Handle* nvshandle_ptr;
 
     TaskHandle_t calibration_task_handle;
 
     Error __send_target_position();
-
     Error save_calibration_data();
-
-    void abort_calibration();
+    Error delete_calibration_data();
     Error run_calibration_sequence();
-    Error detect_position_feedback_noise(AnalogDriver::Value* out_noise_level_mV);
-    Error detect_feedback_latency(AnalogDriver::Value noise_level_mV, TickType_t* out_latency_ticks);
-    Error detect_servo_pwm_deadband(MotorDriver::Value default_position, AnalogDriver::Value feedback_noise_level_mV, MotorDriver::Value* out_deadband_pwm);
 };

@@ -4,19 +4,18 @@
 class MenuI2C : public Menus::Menu
 {
 public:
-    MenuI2C();
-    MenuI2C(const char* title);
-    MenuI2C(const char* title, Menu* parent);
-    MenuI2C(const char* title, Menu* parent, const uint8_t icon[8]);
-    virtual ~MenuI2C();
+    MenuI2C() = default;
+    MenuI2C(Menu* parent);
+    virtual ~MenuI2C() = default;
 
 protected:
-    virtual void onBack() override;
-    virtual void onSelect() override;
-    virtual void onNext() override;
-    virtual void onPrev() override;
+    virtual bool onBack() override;
+    virtual bool onSelect() override;
+    virtual bool onNext() override;
+    virtual bool onPrev() override;
 
-    virtual void onCreate() override;
+    virtual void onShow() override;
+    virtual void onHide() override;
     virtual void onRender() override;
     virtual void onUpdate() override;
 

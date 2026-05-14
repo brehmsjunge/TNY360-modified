@@ -3,7 +3,7 @@
 namespace Draw
 {
     template <bool SafeMode = false>
-    void Pixel(uint16_t x, uint16_t y, ScreenDriver::Color c)
+    void Pixel(uint16_t x, uint16_t y, ScreenDriver::Color c = ScreenDriver::COLOR_WHITE)
     {
         if constexpr (SafeMode)
         {
@@ -13,7 +13,7 @@ namespace Draw
     }
 
     template <bool SafeMode = false>
-    void Line(uint16_t x1, uint16_t y1, uint16_t x2, uint16_t y2, ScreenDriver::Color c)
+    void Line(uint16_t x1, uint16_t y1, uint16_t x2, uint16_t y2, ScreenDriver::Color c = ScreenDriver::COLOR_WHITE)
     {
         int16_t dx = abs(x2 - x1);
         int16_t dy = abs(y2 - y1);
@@ -54,7 +54,7 @@ namespace Draw
     }
 
     template<bool SafeMode = false>
-    void LineThick(int16_t x1, int16_t y1, int16_t x2, int16_t y2, uint8_t w, ScreenDriver::Color c)
+    void LineThick(int16_t x1, int16_t y1, int16_t x2, int16_t y2, uint8_t w, ScreenDriver::Color c = ScreenDriver::COLOR_WHITE)
     {
         if (w <= 1) {
             Line(x1, y1, x2, y2, c);
@@ -99,7 +99,7 @@ namespace Draw
     }
 
     template <bool SafeMode = false>
-    void Hline(uint16_t x, uint16_t y, uint16_t l, ScreenDriver::Color c)
+    void Hline(uint16_t x, uint16_t y, uint16_t l, ScreenDriver::Color c = ScreenDriver::COLOR_WHITE)
     {
         if constexpr (SafeMode)
         {
@@ -112,7 +112,7 @@ namespace Draw
     }
 
     template <bool SafeMode = false>
-    void Vline(uint16_t x, uint16_t y, uint16_t l, ScreenDriver::Color c)
+    void Vline(uint16_t x, uint16_t y, uint16_t l, ScreenDriver::Color c = ScreenDriver::COLOR_WHITE)
     {
         if constexpr (SafeMode)
         {
@@ -127,7 +127,7 @@ namespace Draw
     }
 
     template <bool SafeMode = false>
-    void RectFilled(uint16_t x, uint16_t y, uint16_t w, uint16_t h, ScreenDriver::Color c)
+    void RectFilled(uint16_t x, uint16_t y, uint16_t w, uint16_t h, ScreenDriver::Color c = ScreenDriver::COLOR_WHITE)
     {
         if constexpr (SafeMode)
         {
@@ -144,7 +144,7 @@ namespace Draw
     }
 
     template <bool SafeMode = false>
-    void RectRounded(uint16_t x, uint16_t y, uint16_t w, uint16_t h, uint16_t r, ScreenDriver::Color c)
+    void RectRounded(uint16_t x, uint16_t y, uint16_t w, uint16_t h, uint16_t r, ScreenDriver::Color c = ScreenDriver::COLOR_WHITE)
     {
         if (r > w / 2) r = w / 2;
         if (r > h / 2) r = h / 2;
@@ -179,7 +179,7 @@ namespace Draw
     }
 
     template <bool SafeMode = false>
-    void CircleFilled(uint16_t x0, uint16_t y0, uint16_t r, ScreenDriver::Color c)
+    void CircleFilled(uint16_t x0, uint16_t y0, uint16_t r, ScreenDriver::Color c = ScreenDriver::COLOR_WHITE)
     {
         int16_t x = 0;
         int16_t y = r;
@@ -206,7 +206,7 @@ namespace Draw
     }
 
     template <bool SafeMode = false>
-    void TriangleFilled(int16_t x0, int16_t y0, int16_t x1, int16_t y1, int16_t x2, int16_t y2, ScreenDriver::Color c)
+    void TriangleFilled(int16_t x0, int16_t y0, int16_t x1, int16_t y1, int16_t x2, int16_t y2, ScreenDriver::Color c = ScreenDriver::COLOR_WHITE)
     {
         if (y0 > y1) { std::swap(y0, y1); std::swap(x0, x1); }
         if (y1 > y2) { std::swap(y1, y2); std::swap(x1, x2); }
@@ -264,7 +264,7 @@ namespace Draw
     }
 
     template <bool SafeMode = false>
-    void Blit(uint16_t x, uint16_t y, uint16_t w, uint16_t h, uint8_t* bitmap, ScreenDriver::Color color, bool transparent_bg = false)
+    void Blit(uint16_t x, uint16_t y, uint16_t w, uint16_t h, uint8_t* bitmap, ScreenDriver::Color color = ScreenDriver::COLOR_WHITE, bool transparent_bg = false)
     {
         for (uint16_t j = 0; j < h; j++)
         {
@@ -285,8 +285,9 @@ namespace Draw
     }
 
     template <bool SafeMode = false>
-    void Text(uint16_t x, uint16_t y, const char* text, ScreenDriver::Color color, bool transparent_bg = false)
+    void Text(uint16_t x, uint16_t y, char* text, ScreenDriver::Color color = ScreenDriver::COLOR_WHITE, bool transparent_bg = false)
     {
+        uint16_t x_coord = x;
         while (*text)
         {
             uint8_t c = *text++;
@@ -296,13 +297,13 @@ namespace Draw
                 for (uint16_t j = 0; j < 8; j++) {
                     for (uint16_t k = 0; k < 8; k++) {
                         bool active = (screen_font[c][j] & (1 << k));
-                        Pixel<true>(x + k, y + j, active ? color : !color);
+                        Pixel<true>(x_coord + k, y + j, active ? color : !color);
                     }
                 }
             }
             else 
             {
-                auto* draw_ptr = &ScreenDriver::info.data[y * ScreenDriver::info.width + x];
+                auto* draw_ptr = &ScreenDriver::info.data[y * ScreenDriver::info.width + x_coord];
 
                 for (uint16_t j = 0; j < 8; j++)
                 {
@@ -317,8 +318,19 @@ namespace Draw
                     draw_ptr += ScreenDriver::info.width;
                 }
             }
-            x += 8; 
+
+            x_coord += 8;
+            if (x_coord >= ScreenDriver::info.width)
+            {
+                x_coord = x;
+                y += 8+2; // 8 for font height + 2 for line spacing
+            }
         }
+    }
+    template <bool SafeMode = false>
+    void Text(uint16_t x, uint16_t y, const char* text, ScreenDriver::Color color = ScreenDriver::COLOR_WHITE, bool transparent_bg = false)
+    {
+        Text<SafeMode>(x, y, (char*) text, color, transparent_bg);
     }
 
     uint16_t GetTextWidth(const char* text);

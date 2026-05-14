@@ -7,15 +7,34 @@
 class Joint
 {
 public:
-    constexpr static float MAX_VELOCITY_RAD_S = 5.0f; // Maximum velocity in radians per second
+    constexpr static float MAX_VELOCITY_RAD_S = 6.0f; // Maximum velocity in radians per second
     constexpr static const char* TAG = "Joint";
 
+    enum class Id : uint8_t
+    {
+        FrontLeftHipRoll = 0,
+        FrontLeftHipPitch = 1,
+        FrontLeftKneePitch = 2,
+        BackLeftHipRoll = 3,
+        BackLeftHipPitch = 4,
+        BackLeftKneePitch = 5,
+        BackRightHipRoll = 6,
+        BackRightHipPitch = 7,
+        BackRightKneePitch = 8,
+        FrontRightHipRoll = 9,
+        FrontRightHipPitch = 10,
+        FrontRightKneePitch = 11,
+        EarLeft = 12,
+        EarRight = 13,
+        Count = 14
+    };
+
     /**
-     * @brief Get a Joint instance by its motor channel.
-     * @param motor_channel The motor channel associated with the joint.
+     * @brief Get a Joint instance by its ID.
+     * @param id The ID of the joint.
      * @return Pointer to the Joint instance, or nullptr if not found.
      */
-    static Joint* GetJoint(MotorDriver::Channel motor_channel);
+    static Joint* GetJoint(Joint::Id id);
 
     /**
      * @brief Clamp maximum velocity for all joints.
@@ -26,7 +45,7 @@ public:
 
     Joint();
 
-    Joint(MotorController motor_controller, float min_angle_rad = 0.f, float max_angle_rad = TWO_PI, bool inverted = false, bool has_feedback = true);
+    Joint(Joint::Id id, MotorController motor_controller, float min_angle_rad = 0.f, float max_angle_rad = TWO_PI, bool inverted = false, bool has_feedback = true);
 
     /**
      * @brief Initialize the joint.
@@ -41,11 +60,18 @@ public:
     Error deinit();
 
     /**
-     * @brief Update the joint state.
+     * @brief Estimate the joint state.
      * @note This method should not be called manually, it is called internally in the control loop.
      * @return Error code indicating success or failure.
      */
-    Error update();
+    Error estimateState(float dt);
+
+    /**
+     * @brief Apply a new command to the joint.
+     * @note This method should not be called manually, it is called internally in the control loop.
+     * @return Error code indicating success or failure.
+     */
+    Error applyCommand(float joint_angle_rad, float dt);
 
     /**
      * @brief Enable the joint (motor).
@@ -82,27 +108,11 @@ public:
     Error getVelocity(float &result) const;
 
     /**
-     * @brief Set the target angle for the joint.
-     * @param angle_rad Target angle in radians.
-     * @return Error code indicating success or failure.
-     * @note If no feedback, calling this method will enable the motor.
-     */
-    Error setTarget(float angle_rad);
-
-    /**
      * @brief Get the target angle of the joint.
      * @param result Target angle in radians.
      * @return Error code indicating success or failure.
      */
     Error getTarget(float &result) const;
-
-    /**
-     * @brief Set the target angle for the joint with a specified time to reach it.
-     * @param angle_rad Target angle in radians.
-     * @param time_s Time in seconds to reach the target.
-     * @return Error code indicating success or failure.
-     */
-    Error setTarget_Timed(float angle_rad, float time_s);
 
     /**
      * @brief Get the current position of the joint.
@@ -148,19 +158,38 @@ public:
      */
     MotorController& getMotorController() { return motor_controller; }
 
+    /**
+     * @brief Get the minimum angle of the joint.
+     * @return Minimum angle in radians.
+     */
+    float getMinAngle() const { return min_angle_rad; }
+
+    /**
+     * @brief Get the maximum angle of the joint.
+     * @return Maximum angle in radians.
+     */
+    float getMaxAngle() const { return max_angle_rad; }
+
+    /**
+     * @brief Check if the joint is inverted.
+     * @return True if the joint is inverted, false otherwise.
+     */
+    bool isInverted() const { return inverted; }
+
 private:
     static Joint* joints[JOINT_COUNT]; // static array of all joints (index is motor channel)
     static float joint_velocity_clamp_rad_s; // static variable for global maximum joint velocity
 
+    Joint::Id id;
     MotorController motor_controller;
     KalmanFilter1D kalman_filter;
     float min_angle_rad;
     float max_angle_rad;
     bool inverted;
     float target_angle_rad;
-    float feedback_angle_rad;
-    float estimate_angle_rad;
-    float model_angle_rad;
+    float feedback_angle_rad = 0;
+    float estimate_angle_rad = 0;
+    float model_angle_rad = 0;
     float velocity_rad_s;
     bool has_feedback;
 

@@ -54,7 +54,7 @@ namespace RPC
         if (xQueueSend(rpcRequestQueue, &job, 0) != pdTRUE)
         {
             delete job; // Anti-leak security
-            Log::Add(Log::Level::Warning, TAG, "Request queue full, job dropped.");
+            LOG_WARNING(TAG, "Request queue full, job dropped.");
             return Error::OutOfMemory;
         }
 
@@ -93,19 +93,23 @@ namespace RPC
      */
     inline Error Init()
     {
+        LOG_SCOPE(TAG, "RPC::Init");
+
         // RPC jobs queue creation
         rpcRequestQueue = xQueueCreate(RPC_QUEUE_SIZE, sizeof(RpcJob*));
         rpcResponseQueue = xQueueCreate(RPC_QUEUE_SIZE, sizeof(RpcJob*));
 
         if (rpcRequestQueue == nullptr || rpcResponseQueue == nullptr) {
-            Log::Add(Log::Level::Error, TAG, "Failed to create RPC queues");
+            LOG_ERROR(TAG, "Failed to create RPC queues");
+            ErrorHandle(ErrorStruct::RPCInitFailed);
             return Error::Unknown; // Remplace par ton code d'erreur
         }
 
         // Launching core 0 background job task
         if (xTaskCreatePinnedToCore(core0_task_func, "RPC_Core0", 4096, nullptr, tskIDLE_PRIORITY + 5, &core0_executor_task, CORE_BRAIN) != pdPASS)
         {
-            Log::Add(Log::Level::Error, TAG, "Error creating Core0 thread safe executor");
+            LOG_ERROR(TAG, "Error creating Core0 thread safe executor");
+            ErrorHandle(ErrorStruct::RPCInitFailed);
             return Error::Unknown;
         }
         

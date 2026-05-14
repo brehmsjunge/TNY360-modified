@@ -8,38 +8,39 @@
 /** MULTICORE SETUP */
 constexpr int CORE_BRAIN = 0;
 constexpr int CORE_REFLEX = 1;
-// number of milliseconds before triggering security stop (in case brain core crashes to clear control intent)
+// number of milliseconds before triggering security stop (in case brain core crashes, to clear control intent)
 constexpr uint32_t CONTROL_INTENT_WATCHDOG_MS = 500;
 
 /** OTA SETUP **/
 constexpr const char* OTA_FIRMWARE_LATEST_URL = "https://api.tny-robotics.com/firmware/latest";
+constexpr const char* OTA_FILESYSTEM_DOWNLOAD_URL = "https://cdn.tny-robotics.com/firmware/tny-360/%s/filesystem.bin";
 constexpr int OTA_UPDATE_TIMEOUT_MS = 5000;
 constexpr int OTA_UPDATE_FILESYSTEM_BUFFER_SIZE = 4096; // in bytes
 constexpr const char* OTA_ROBOT_MODEL = "tny-360";
 
 
 /** PHYSICAL INFORMATIONS **/
-constexpr int LEG_THIGH_LENGTH_MM = 100; // in mm
-constexpr int LEG_CALF_LENGTH_MM = 100; // in mm
-constexpr int HIP_OFFSET_MM = 30; // in mm
-constexpr int HIP_POS_X_MM = 75; // in mm
-constexpr int HIP_POS_Y_MM = 50; // in mm
+constexpr float LEG_THIGH_LENGTH_M = 0.100f; // in meters
+constexpr float LEG_CALF_LENGTH_M = 0.100f; // in meters
+constexpr float HIP_OFFSET_M = 0.036f; // in meters
+constexpr float HIP_POS_X_M = 0.083f; // in meters, from body center
+constexpr float HIP_POS_Y_M = 0.053f; // in meters, from body center
 
 /** DEFAULT POSE INFORMATIONS **/
-constexpr float DEFAULT_BODY_HEIGHT_MM = 140.0f; // in mm, from ground level
-constexpr float DEFAULT_FEET_SPREAD_Y_MM = 100.0f; // in mm, from body center 
-constexpr float DEFAULT_FEET_SPREAD_X_MM = 90.0f; // in mm, from body center
+constexpr float DEFAULT_BODY_HEIGHT_M   = 0.120f; // in meters, from ground level
+constexpr float DEFAULT_FEET_SPREAD_X_M = 0.090f; // in meters, from body center
+constexpr float DEFAULT_FEET_SPREAD_Y_M = 0.100f; // in meters, from body center
 
 
 /** LOGGING **/
 // Maximum number of log lines to store
-constexpr uint8_t LOG_MAX_LINES = 10;
+constexpr int LOG_MAX_LINES = 20;
 // Maximum length of each log message
-constexpr uint8_t LOG_MAX_MSG_LEN = 128;
+constexpr int LOG_MAX_MSG_LEN = 256;
 
 /** FILESYSTEM **/
 // Maximum path length for file operations
-constexpr uint8_t MAX_PATH_LEN = 128;
+constexpr int MAX_PATH_LEN = 128;
 
 /** RPC **/
 constexpr int RPC_QUEUE_SIZE = 32; // number of pending RPC jobs (between core 0 and core 1)
@@ -70,11 +71,11 @@ constexpr uint8_t PROTOCOL_MAX_COMMANDS_HANDLERS = 255;
 
 /** I2C **/
 // Primary I2C GPIO pins (for critical modules, like sensors)
-constexpr gpio_num_t I2C_PRIMARY_SDA_GPIO_NUM = GPIO_NUM_47;
-constexpr gpio_num_t I2C_PRIMARY_SCL_GPIO_NUM = GPIO_NUM_21;
+constexpr gpio_num_t I2C_PRIMARY_SDA_GPIO_NUM = GPIO_NUM_21;
+constexpr gpio_num_t I2C_PRIMARY_SCL_GPIO_NUM = GPIO_NUM_47;
 // Secondary I2C GPIO pins (for less critical modules, like screens)
-constexpr gpio_num_t I2C_SECONDARY_SDA_GPIO_NUM = GPIO_NUM_38;
-constexpr gpio_num_t I2C_SECONDARY_SCL_GPIO_NUM = GPIO_NUM_45;
+constexpr gpio_num_t I2C_SECONDARY_SDA_GPIO_NUM = GPIO_NUM_9;
+constexpr gpio_num_t I2C_SECONDARY_SCL_GPIO_NUM = GPIO_NUM_48;
 
 
 /** Analog Readings **/
@@ -92,21 +93,21 @@ constexpr float CONTROL_LOOP_DT_S = 1.0f / CONTROL_LOOP_FREQ_HZ;
 constexpr int CONTROL_LOOP_DT_MS = static_cast<int>(CONTROL_LOOP_DT_S * 1000);
 
 // Decision loop frequency
-constexpr int DECISION_LOOP_FREQ_HZ = 50; // Hz
+constexpr int DECISION_LOOP_FREQ_HZ = 10; // Hz
 constexpr float DECISION_LOOP_DT_S = 1.0f / DECISION_LOOP_FREQ_HZ;
 constexpr int DECISION_LOOP_DT_MS = static_cast<int>(DECISION_LOOP_DT_S * 1000);
 
 /** Analog scanner **/
 // GPIO pins for the 4-bit multiplexer select lines
-// constexpr gpio_num_t SCANNER_SLCT_PIN1 = GPIO_NUM_39;
-// constexpr gpio_num_t SCANNER_SLCT_PIN2 = GPIO_NUM_40;
-// constexpr gpio_num_t SCANNER_SLCT_PIN3 = GPIO_NUM_41;
-// constexpr gpio_num_t SCANNER_SLCT_PIN4 = GPIO_NUM_42;
-// NOTE : Actually I'm dumb and reversed the pin between the analog card and the brain card ...
-constexpr gpio_num_t SCANNER_SLCT_PIN1 = GPIO_NUM_42;
-constexpr gpio_num_t SCANNER_SLCT_PIN2 = GPIO_NUM_41;
-constexpr gpio_num_t SCANNER_SLCT_PIN3 = GPIO_NUM_40;
-constexpr gpio_num_t SCANNER_SLCT_PIN4 = GPIO_NUM_39;
+constexpr gpio_num_t SCANNER_SLCT_PIN1 = GPIO_NUM_39;
+constexpr gpio_num_t SCANNER_SLCT_PIN2 = GPIO_NUM_40;
+constexpr gpio_num_t SCANNER_SLCT_PIN3 = GPIO_NUM_41;
+constexpr gpio_num_t SCANNER_SLCT_PIN4 = GPIO_NUM_42;
+
+
+/** LEG **/
+// Voltage threshold at which the leg is considered as grounded (touching ground)
+constexpr int LEG_GROUNDED_THRESHOLD_MV = 3300 / 2;
 
 
 /** IMU **/
@@ -116,7 +117,7 @@ constexpr uint8_t IMU_I2C_ADDR = 0x68;
 constexpr uint32_t IMU_I2C_CLOCK = 100000; // 100kHz, could be up to 400kHz but i'm not 100% confident in the wiring
 // number of samples to gather for calibration
 constexpr uint16_t IMU_NB_CALIB_SAMPLES = 100;
-// NOTE : Internal robot imu update is driven by the main timer at 50Hz
+// NOTE : Internal robot imu update is driven by the main timer at 200Hz
 
 
 /** Motor **/
@@ -136,8 +137,8 @@ constexpr uint8_t JOINT_COUNT = 16; // 12 legs joints + 2 ears, but PCA9685 has 
 constexpr int SCREEN_REFRESH_RATE = 30;
 
 /** Buttons **/
-constexpr gpio_num_t BTN_LEFT_PIN = GPIO_NUM_10;
-constexpr gpio_num_t BTN_RIGHT_PIN = GPIO_NUM_11;
+constexpr gpio_num_t BTN_LEFT_PIN = GPIO_NUM_11;
+constexpr gpio_num_t BTN_RIGHT_PIN = GPIO_NUM_10;
 constexpr uint16_t BTN_LONG_PRESS_MS = 500; // ms
 // Buttons polling interval in milliseconds
 constexpr uint16_t BTN_POLL_INT_MS = 50; // ms
@@ -151,5 +152,5 @@ constexpr uint8_t MENU_LIST_ITEM_SELECTED_SHIFT = 8;
 
 /** Speaker **/
 constexpr gpio_num_t SPEAKER_GPIO_NUM = GPIO_NUM_1;
-constexpr int SPEAKER_SAMPLE_RATE_HZ = 44100; // in Hz
+constexpr int SPEAKER_SAMPLE_RATE_HZ = 22'500; // in Hz
 constexpr size_t SPEAKER_NB_AUDIO_PROVIDERS = 4; // number of stacked audio providers

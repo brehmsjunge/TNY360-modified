@@ -13,6 +13,8 @@ WebInterface::WebInterface(uint16_t web_port)
 
 Error WebInterface::init()
 {
+    LOG_SCOPE(TAG, "WebInterface::init");
+
     httpd_config_t config = HTTPD_DEFAULT_CONFIG();
     config.server_port = port;
     config.max_uri_handlers = 8;
@@ -23,20 +25,22 @@ Error WebInterface::init()
     config.recv_wait_timeout = 5;
     config.send_wait_timeout = 5;
 
+    LOG_DEBUG(TAG, "Starting web server on port %d", port);
     if (httpd_start(&server, &config) != ESP_OK)
     {
         server = nullptr;
-        Log::Add(Log::Level::Error, TAG, "Failed to start web server");
+        LOG_ERROR(TAG, "Failed to start web server");
+        ErrorHandle(ErrorStruct::WebInterfaceInitFailed);
         return Error::Unknown;
     }
     running = true;
 
     if (Error err = LittleFS::Init(); err != Error::None)
     {
-        Log::Add(Log::Level::Error, TAG, "Failed to initialize LittleFS");
         return err;
     }
 
+    // FIXME : Should get the errors from here and handle them
     registerURIHandlers();
     return Error::None;
 }
@@ -58,15 +62,22 @@ void WebInterface::registerURIHandlers()
         .uri       = "/*", // Wildcard
         .method    = HTTP_GET,
         .handler   = main_request_handler,
-        .user_ctx  = this
+        .user_ctx  = this,
+        .is_websocket = false,
+        .handle_ws_control_frames = false,
+        .supported_subprotocol = nullptr,
     };
     httpd_register_uri_handler(server, &catch_all_uri);
 
     // Note: The 404 handler is less useful here because "/*" catches everything, 
     // except if the method is not GET (e.g., POST/PUT)
     httpd_register_err_handler(server, HTTPD_404_NOT_FOUND, [](httpd_req_t *req, httpd_err_code_t error) -> esp_err_t {
+        // return to homepage on 404 to let the SPA handle it + Captive portal support
+        char redirect_url[64];
+        snprintf(redirect_url, sizeof(redirect_url), "http://%s/", Robot::GetInstance().getNetworkManager().getWiFiManager().getIPAddr());
+
         httpd_resp_set_status(req, "302 Temporary Redirect");
-        httpd_resp_set_hdr(req, "Location", "/");
+        httpd_resp_set_hdr(req, "Location", redirect_url);
         httpd_resp_send(req, "Redirecting...", HTTPD_RESP_USE_STRLEN);
         return ESP_OK;
     });
@@ -95,7 +106,7 @@ esp_err_t WebInterface::send_file_chunked(httpd_req_t *req, const char *filepath
     FILE *fd = fopen(filepath, "r");
     if (!fd)
     {
-        Log::Add(Log::Level::Error, TAG, "Failed to read file: %s", filepath);
+        LOG_ERROR(TAG, "Failed to read file: %s", filepath);
         return HTTPD_500_INTERNAL_SERVER_ERROR;
     }
 
@@ -137,6 +148,23 @@ esp_err_t WebInterface::send_file_chunked(httpd_req_t *req, const char *filepath
 
 esp_err_t WebInterface::main_request_handler(httpd_req_t *req)
 {
+    // Check host type to detect captive portal requests
+    char host_header[64];
+    char my_ip[16];
+    strncpy(my_ip, Robot::GetInstance().getNetworkManager().getWiFiManager().getIPAddr(), sizeof(my_ip) - 1);
+    if (httpd_req_get_hdr_value_str(req, "Host", host_header, sizeof(host_header)) == ESP_OK)
+    {
+        if (strstr(host_header, my_ip) == NULL && strstr(host_header, "localhost") == NULL)
+        {
+            char redirect_url[64];
+            snprintf(redirect_url, sizeof(redirect_url), "http://%s/", my_ip);
+            httpd_resp_set_status(req, "302 Found");
+            httpd_resp_set_hdr(req, "Location", redirect_url);
+            httpd_resp_send(req, "Redirecting to dashboard...", HTTPD_RESP_USE_STRLEN);
+            return ESP_OK;
+        }
+    }
+
     std::string filepath = MOUNT_POINT;
     filepath += req->uri;
 

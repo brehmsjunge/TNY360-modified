@@ -1,5 +1,7 @@
 #pragma once
 #include "common/utils.hpp"
+#include "drivers/CameraDriver.hpp"
+#include "ui/menus/Splash.hpp"
 
 class UIManager
 {
@@ -20,5 +22,8 @@ public:
      */
     Error deinit();
 
+    CameraDriver& getCamera() { return camera; }
+
 private:
+    CameraDriver camera;
 };

@@ -13,12 +13,12 @@
             </div>
         </div>
         <div class="flex justify-end items-center w-48">
-            <UButton icon="i-lucide-settings" variant="link" color="neutral" size="xl" @click="openSettings" />
+            <UButton icon="lucide:settings" variant="link" color="neutral" size="xl" @click="openSettings" />
         </div>
     </div>
     <UModal v-model:open="settingsModalOpen" :title="'Settings'" :fullscreen="true">
         <template #body>
-            Settings
+            <SettingsModal />
         </template>
     </UModal>
 </template>
