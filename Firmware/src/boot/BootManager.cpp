@@ -15,13 +15,6 @@ namespace BootManager
             return true; // block robot from booting as normal
         }
 
-        if (boot_ZERO_CALIB_needed())
-        {
-            LOG_INFO(TAG, "Zero calibration is needed. Starting in ZERO CALIB boot mode");
-            boot_ZERO_CALIB();
-            return true; // start zero calib boot
-        }
-
         if (boot_CALIBRATION_needed())
         {
             LOG_INFO(TAG, "Calibration data missing. Starting in CALIBRATION boot mode");

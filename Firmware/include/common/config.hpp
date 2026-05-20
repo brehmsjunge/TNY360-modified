@@ -22,9 +22,9 @@ constexpr const char* OTA_ROBOT_MODEL = "tny-360";
 /** PHYSICAL INFORMATIONS **/
 constexpr float LEG_THIGH_LENGTH_M = 0.100f; // in meters
 constexpr float LEG_CALF_LENGTH_M = 0.100f; // in meters
-constexpr float HIP_OFFSET_M = 0.036f; // in meters
-constexpr float HIP_POS_X_M = 0.083f; // in meters, from body center
-constexpr float HIP_POS_Y_M = 0.053f; // in meters, from body center
+constexpr float HIP_OFFSET_M = 0.034f; // in meters
+constexpr float HIP_POS_X_M = 0.086f; // in meters, from body center
+constexpr float HIP_POS_Y_M = 0.052f; // in meters, from body center
 
 /** DEFAULT POSE INFORMATIONS **/
 constexpr float DEFAULT_BODY_HEIGHT_M   = 0.120f; // in meters, from ground level
@@ -80,7 +80,7 @@ constexpr gpio_num_t I2C_SECONDARY_SCL_GPIO_NUM = GPIO_NUM_48;
 
 /** Analog Readings **/
 // EMA filter alpha value (1.0 = no filtering, 0.1 = big inertia)
-constexpr float ANALOG_EMA_ALPHA = 0.5f;
+constexpr float ANALOG_EMA_ALPHA = 0.05f;
 
 /** Timer management **/
 // Control loop frequency

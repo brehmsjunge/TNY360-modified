@@ -12,14 +12,9 @@ namespace BootManager
      */
     bool CheckForSpecialBoot();
 
-    bool boot_ZERO_CALIB_needed();
-
     bool boot_CALIBRATION_needed();
 
     bool boot_UPDATE_needed();
-
-    /// @brief INTERNAL, boot sequence in ZERO_CALIB mode
-    void boot_ZERO_CALIB();
 
     /// @brief INTERNAL, boot sequence in CALIBRATION mode
     void boot_CALIBRATION();

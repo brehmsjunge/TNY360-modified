@@ -234,6 +234,7 @@ Error ControlLoop::control_task()
         LOG_ERROR(TAG, "Error reading all ADC channels");
     }
     perf_reader.stop();
+
     perf_imu.start();
     if (Error err = IMUDriver::ReadData(); err != Error::None)
     {
