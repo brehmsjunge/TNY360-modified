@@ -15,14 +15,13 @@ Error SerialTransport::init()
     LOG_SCOPE(TAG, "SerialTransport::init");
 
     // configure UART parameters
-    uart_config_t uart_config = {
-        .baud_rate  = BAUDRATE,                  // 921600 baud transmission speed
-        .data_bits  = UART_DATA_8_BITS,          // 8 bits per character (standard)
-        .parity     = UART_PARITY_DISABLE,       // no bit-level error checking needed
-        .stop_bits  = UART_STOP_BITS_1,          // 1 stop bit (standard)
-        .flow_ctrl  = UART_HW_FLOWCTRL_DISABLE,  // no hardware handshake over USB
-    };
-
+      uart_config_t uart_config = {};
+    uart_config.baud_rate  = BAUDRATE;
+    uart_config.data_bits  = UART_DATA_8_BITS;
+    uart_config.parity     = UART_PARITY_DISABLE;
+    uart_config.stop_bits  = UART_STOP_BITS_1;
+    uart_config.flow_ctrl  = UART_HW_FLOWCTRL_DISABLE;
+    
     // apply UART configuration to the driver
     if (uart_param_config(UART_PORT, &uart_config) != ESP_OK)
     {
