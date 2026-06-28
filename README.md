@@ -29,9 +29,11 @@ This fork documents my own modifications and extensions on top of their work.
 
 ## 🔧 My Modifications
 
-### 📋 Planned
+
+### 🚧 In Progress
 - **USB Serial Dashboard Transport** (`SerialTransport.hpp/.cpp`)  
-  Access the robot dashboard over USB instead of WiFi only.  
+  Access the robot dashboard over USB instead of WiFi only. 
+### 📋 Planned
 
 - **Active Cooling**  
   2x 30x30mm 12V fans mounted on the top cover.  
