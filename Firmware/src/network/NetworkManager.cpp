@@ -1,4 +1,5 @@
 #include "network/NetworkManager.hpp"
+#include "network/SerialTransport.hpp"
 #include "network/protocol/Protocol.hpp"
 #include "common/Log.hpp"
 #include "Robot.hpp"
