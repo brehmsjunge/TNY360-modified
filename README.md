@@ -32,7 +32,6 @@ This fork documents my own modifications and extensions on top of their work.
 ### 📋 Planned
 - **USB Serial Dashboard Transport** (`SerialTransport.hpp/.cpp`)  
   Access the robot dashboard over USB instead of WiFi only.  
-  Uses the same binary protocol as WebSocket — all modules work without changes.
 
 - **Active Cooling**  
   2x 30x30mm 12V fans mounted on the top cover.  
@@ -44,7 +43,7 @@ This fork documents my own modifications and extensions on top of their work.
   Later upgrade: Arduino Uno Q (Linux + MCU) for on-device AI processing.
 
 - **LiDAR + Thermal Camera Expansion**  
-  For autonomous navigation (SLAM) and person detection in dark/smoke environments.
+  For autonomous navigation (SLAM) and person detection
 
 - **Autonomous Navigation (SLAM)**  
   Path planning + obstacle avoidance using LiDAR data.  
