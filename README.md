@@ -63,9 +63,7 @@ For building and assembling the base robot, **follow the original guide:**
 
 </div>
 
-For my modifications, see the relevant folders and their own READMEs:
-- `Firmware/src/network/SerialTransport.cpp` — USB Serial Transport
-- `CAD/cooling/` — Fan cover OpenSCAD files *(coming soon)*
+For my modifications, see the relevant folders and their own READMEs *(coming soon)*
 
 ---
 
