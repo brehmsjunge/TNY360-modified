@@ -2,101 +2,106 @@
 
 <div align="center">
 
-# TNY-360 Quadruped Robot
+# TNY-360 Modified — by Fuffel
 
 [![License: CC BY-NC-SA 4.0](https://img.shields.io/badge/License-CC%20BY--NC--SA%204.0-lightgrey.svg)](https://creativecommons.org/licenses/by-nc-sa/4.0/)
 [![Platform](https://img.shields.io/badge/Platform-ESP32--S3-blue)](https://espressif.com)
 [![Framework](https://img.shields.io/badge/Framework-ESP--IDF-orange)](https://docs.espressif.com/projects/esp-idf/en/latest/esp32/)
+[![Based on](https://img.shields.io/badge/Based%20on-TNY--360%20by%20FurWaz-purple)](https://github.com/TNY-Robotics/TNY-360)
 
-**A compact, open-source robot dog designed to *Understand*, *Interact*, and *Learn*.**
+**A modified fork of the TNY-360 open-source quadruped robot.**  
+**Goal: Transform T360 into an autonomous scout & rescue platform.**
 
-[🌐 Website](https://tny-robotics.com/tny-360) • [📸 Instagram](https://instagram.com/furwaz_) • [💬 Discord](https://discord.gg/XGABkx5A4y) • [📖 Documentation](https://tny-robotics.com/docs/tny-360/)
+[🌐 Original Project](https://tny-robotics.com/tny-360) • [📖 Original Docs](https://tny-robotics.com/docs/tny-360/) • [💬 Discord](https://discord.gg/XGABkx5A4y) • [👤 FurWaz / Paul Loisil](https://instagram.com/furwaz_)
 
 </div>
 
 ---
 
-## 🚀 How to Build Your Own TNY-360
+## ⚠️ This is a Fork
 
-Everything you need to build this robot is 100% free and open-source. Instead of getting lost in the folders, we highly recommend following our official, step-by-step wiki:
+This repository is a **personal modification** of the original [TNY-360 by Paul Loisil / FurWaz (TNY Robotics)](https://github.com/TNY-Robotics/TNY-360).
+
+All credit for the original robot design, firmware architecture, electronics, and documentation goes to **Paul Loisil and the TNY Robotics team**.  
+This fork documents my own modifications and extensions on top of their work.
+
+---
+
+## 🔧 My Modifications
+
+### 📋 Planned
+- **USB Serial Dashboard Transport** (`SerialTransport.hpp/.cpp`)  
+  Access the robot dashboard over USB instead of WiFi only.  
+  Uses the same binary protocol as WebSocket — all modules work without changes.
+
+- **Active Cooling**  
+  2x 30x30mm 12V fans mounted on the top cover.  
+  One intake (cold air in), one exhaust (warm air out) — airflow across the Buck Converter and PCBs.  
+  New top cover design with fan cutouts (OpenSCAD, replacing the logo cover).
+
+- **Arduino I2C Sensor Integration**  
+  Arduino Uno as I2C sensor node (LiDAR data), feeding into the TNY-360 mainboard via the dorsal expansion port.  
+  Later upgrade: Arduino Uno Q (Linux + MCU) for on-device AI processing.
+
+- **LiDAR + Thermal Camera Expansion**  
+  For autonomous navigation (SLAM) and person detection in dark/smoke environments.
+
+- **Autonomous Navigation (SLAM)**  
+  Path planning + obstacle avoidance using LiDAR data.  
+  Target: Arduino Uno Q running ROS2 / Nav2 as master, TNY-360 mainboard as movement slave.
+
+- **Reinforcement Learning Gait**  
+  Teaching T360 to walk using AI instead of pre-programmed gaits.
+
+## 🚀 Getting Started
+
+For building and assembling the base robot, **follow the original guide:**
 
 <div align="center">
 
-> ### **[👉 START HERE: The Official Step-by-Step Guide 👈](https://tny-robotics.com/docs/tny-360/practical-guide/sourcing)**
-> *From ordering the first screw to the assembing the last part, this guide covers it all.*
+> ### **[👉 Original Step-by-Step Guide by TNY Robotics 👈](https://tny-robotics.com/docs/tny-360/practical-guide/sourcing)**
 
 </div>
 
-### 🗂️ Quick Links (For Advanced Makers)
-If you know what you are doing and just want the raw files, here is your toolkit:
+For my modifications, see the relevant folders and their own READMEs:
+- `Firmware/src/network/SerialTransport.cpp` — USB Serial Transport
+- `CAD/cooling/` — Fan cover OpenSCAD files *(coming soon)*
 
-* 🛒 **[Bill of Materials (BOM)](https://tny-robotics.com/docs/tny-360/practical-guide/1.sourcing/)** - What to buy, tools needed, and where to find them.
-* 📐 **[CAD & 3D Files](./CAD)** - Grab the `.STL` and `.3MF` files for your 3D printer.
-* ⚡ **[PCB Designs (Gerbers)](./Electronics/PCBs)** - Files to order the custom PCBs used in the robot.
-* 🧠 **[ESP32 Firmware](./Firmware)** - The ESP-IDF C++ firmware & drivers powering the robot.
-* 🛠️ **[Servo Modding Tutorial](https://tny-robotics.com/docs/tny-360/anatomy/electronics/mg996r-mod)** - Learn the Op-Amp trick to get position-feedback on MG996R servos.
+---
 
-## ✨ Features
+## ⚙️ Original Hardware Specs
 
-* 🧬 **Dual-Core Architecture:**<br> A segregated system using the ESP32-S3. Core 0 ("Reflex") runs a strict 200Hz kinematics/control loop, while Core 1 ("Brain") handles WebSockets, UI, and orchestration.
-* 🔄 **Closed-Loop at 200Hz:**<br> We ditched blind PWM. The TNY-360 uses digital MG996R servos modified with a custom **Op-Amp buffer PCB** for noise-free, high-speed position feedback.
-* ⚡ **Zero Cable Spaghetti:**<br> A fully modular hardware ecosystem. Dedicated PCBs (Control, Sensor, Brain, Power, etc.) communicate cleanly via standardized JST-PH cables.
-* 🛠️ **Smart Auto-Calibration:**<br> Features mechanical endstops for assembly validation and runtime algorithms that compensate for backlash and actuator latency.
-* 🧩 **STEM & Expansion Ready:**<br> Program the robot using [TNY-Coder](https://github.com/TNY-Robotics/TNY-Coder) (our block-based web app) or build custom hardware modules using the dorsal I2C/Power expansion port.
-* 🔋 **Industrial Power:**<br> A custom 3S 18650 battery pack capable of 15A continuous discharge, featuring an integrated BMS and Fuse, for 1h+ of runtime.
+*(Unchanged from original — see [TNY Robotics documentation](https://tny-robotics.com/docs/tny-360/) for full details)*
 
-## 🧠 The Engineering: Beyond a Budget Robot
-
-Most budget quadrupeds suffer from analog noise and jitter when hacking servos for feedback. Simply soldering a wire to a servo's internal potentiometer creates an antenna for EMI and draws current that destabilizes the servo's internal control loop.
-
-**The TNY-360 Solution:** We designed a custom micro-PCB that fits inside the servo, featuring an **Operational Amplifier (Op-Amp) in a voltage follower (buffer) configuration**. 
-This provides near-infinite input impedance (zero interference with the motor) and low output impedance to send a clean analog signal over the robot's wiring harness. Coupled with a software low-pass filter, the ESP32 can cleanly poll all 12 legs at 200Hz.
-
-👉 **[Read the full technical deep-dive and the step-by-step Servo Modding Guide on our documentation site.](https://tny-robotics.com/docs/tny-360/anatomy/electronics/mg996r-mod)**
-
-## ⚙️ Hardware Specs
-
-### 🧠 Core & Power
-* **MCU:** ESP32-S3 N16R8 Module
-* **Power:** 3S LiPo Battery (6x Samsung INR18650-25R)
-* **Monitoring:** INA219 (Voltage/Current sensor)
-
-### 🦵 Actuators
-* **Legs:** 12x MG996R Servos *(Must be modified for analog feedback)*
-* **Head:** 2x SG-90 Micro Servos (Ears)
-* **Driver:** PCA9685 (16-Channel PWM)
-
-### 📡 Sensors & I/O
-* **Vision:** OV2640 Camera Module
-* **Distance:** VL53L0X Time-of-Flight (Lidar)
-* **Orientation:** MPU6050 6-axis IMU
-* **Display:** SH1106 OLED (128x64)
-* **Audio:** I2S MEMS Microphone + Speaker
+| Component | Spec |
+|---|---|
+| MCU | ESP32-S3 N16R8 |
+| Power | 3S LiPo (6x Samsung INR18650-25R) |
+| Legs | 12x MG996R (modified with Op-Amp feedback PCB) |
+| Head | 2x SG-90 Micro Servos |
+| Vision | OV2640 Camera |
+| Distance | VL53L0X ToF LiDAR |
+| IMU | MPU6050 |
+| Display | SH1106 OLED |
+| Audio | I2S MEMS Mic + Speaker |
 
 ---
 
 ## 📂 Repository Structure
 
-* `BOM/` — **Bill of Materials.** Detailed lists of all components, PCBs, screws, and cables, with links.
-* `CAD/` — **Hardware Source.** FreeCAD project files and ready-to-print STLs.
-* `Electronics/PCBs/` — **PCB Designs.** Gerber files, BOMs, and Pick'n'Place for all PCBs.
-* `Firmware/` — **Codebase.** PlatformIO project (C++/ESP-IDF).
-* `Firmware/components/` — **Drivers.** Custom libraries for sensors/actuators.
+- `BOM/` — Bill of Materials (original)
+- `CAD/` — Hardware files (original + my additions in `CAD/cooling/`)
+- `Electronics/PCBs/` — PCB Designs (original)
+- `Firmware/` — Codebase with my modifications on top of the original
+- `Firmware/src/network/SerialTransport.cpp` — USB Serial Transport (my addition)
 
-## 🤝 Contributing
+---
 
-We love contributions!
-* **Code:** Please follow the ESP-IDF coding style.
-* **Hardware:** Submit PRs with updated FreeCAD files or improvements.
-* Found a bug? [Open an Issue](https://github.com/TNY-Robotics/TNY-360/issues).
+## 📄 License & Credits
 
-## 📄 License & Authors
+**Original TNY-360** by [Paul Loisil / FurWaz](https://instagram.com/furwaz_) — [TNY Robotics](https://tny-robotics.com)  
+**This fork** by Fuffel
 
-**TNY-360** is maintained by the [TNY Robotics Team](https://tny-robotics.com).
-
-Licensed under **CC BY-NC-SA 4.0**.<br>
-*You are free to share and adapt this material for non-commercial purposes, as long as you provide attribution and share alike.*
+Licensed under **CC BY-NC-SA 4.0** — non-commercial use, attribution required, share alike.
 
 [![CC BY-NC-SA 4.0](https://i.creativecommons.org/l/by-nc-sa/4.0/88x31.png)](http://creativecommons.org/licenses/by-nc-sa/4.0/)
-
-Need help? Contact us [by mail](mailto:contact@tny-robotics.com) or join our [Discord](https://discord.gg/XGABkx5A4y).
