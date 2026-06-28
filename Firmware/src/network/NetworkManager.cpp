@@ -4,6 +4,7 @@
 #include "common/Log.hpp"
 #include "Robot.hpp"
 
+static SerialTransport serial_transport;
 NetworkManager::NetworkManager()
 {
 }
@@ -12,40 +13,16 @@ Error NetworkManager::init()
 {
     LOG_SCOPE(TAG, "NetworkManager::init");
 
-    // Initialize the WiFi manager
-    if (Error err = wifi_manager.init(); err != Error::None)
-    {
-        return err;
-    }
-
-    // Initialize the web interface
-    if (Error err = web_interface.init(); err != Error::None)
-    {
-        return err;
-    }
-
-    // Initialize the websocket server
-    if (Error err = web_socket.init(); err != Error::None)
-    {
-        return err;
-    }
-
-    // Initialize the update manager
-    if (Error err = update_manager.init(); err != Error::None)
-    {
-        return err;
-    }
-
-    // Initialize the protocol system
+    // initialize the protocol dispatcher (required for all transports)
     if (Error err = Protocol::Init(); err != Error::None)
     {
         return err;
     }
 
-    // Initialize the camera server
-    // FIXME : The method name shouldn't be start but something like initServer
-    if (Error err = Robot::GetInstance().getUIManager().getCamera().start(); err != Error::None)
+    // initialize USB serial transport (replaces WiFi + WebSocket)
+    if (Error err = serial_transport.init(); err != Error::None)
     {
+        LOG_ERROR(TAG, "Failed to initialize SerialTransport");
         return err;
     }
 
@@ -54,32 +31,14 @@ Error NetworkManager::init()
 
 Error NetworkManager::deinit()
 {
-    // Deinitialize the protocol system
+    // stop the serial transport and release UART
+    if (Error err = serial_transport.deinit(); err != Error::None)
+    {
+        return err;
+    }
+
+    // deinitialize the protocol dispatcher
     if (Error err = Protocol::Deinit(); err != Error::None)
-    {
-        return err;
-    }
-
-    // Denitialize the update manager
-    if (Error err = update_manager.deinit(); err != Error::None)
-    {
-        return err;
-    }
-
-    // Deinitialize the websocket server
-    if (Error err = web_socket.deinit(); err != Error::None)
-    {
-        return err;
-    }
-    
-    // Deinitialize the web interface
-    if (Error err = web_interface.deinit(); err != Error::None)
-    {
-        return err;
-    }
-
-    // Deinitialize the WiFi manager
-    if (Error err = wifi_manager.deinit(); err != Error::None)
     {
         return err;
     }
