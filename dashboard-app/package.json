@@ -1,0 +1,33 @@
+{
+  "name": "tny360-dashboard",
+  "version": "1.0.0",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "build": "electron-builder"
+  },
+  "build": {
+    "appId": "com.tny360.dashboard",
+    "productName": "TNY-360 Dashboard",
+    "win": {
+      "target": "nsis",
+      "icon": "icon.ico"
+    },
+    "files": [
+      "main.js",
+      "preload.js",
+      "index.html",
+      "../Firmware/extras/WebPortal/.output/public/**"
+    ],
+    "extraResources": [
+      {
+        "from": "../Firmware/extras/WebPortal/.output/public",
+        "to": "webportal"
+      }
+    ]
+  },
+  "devDependencies": {
+    "electron": "*",
+    "electron-builder": "^26.15.3"
+  }
+}

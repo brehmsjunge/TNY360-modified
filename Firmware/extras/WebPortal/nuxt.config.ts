@@ -17,9 +17,9 @@ export default defineNuxtConfig({
     compressPublicAssets: true,
     minify: true
   },
-  app: {
-    baseURL: '/'
-  },
+app: {
+  baseURL: '/'
+},
   vite: {
     build: {
       cssCodeSplit: false,
