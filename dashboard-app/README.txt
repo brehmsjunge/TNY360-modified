@@ -16,15 +16,26 @@ HOW IT WORKS
 REQUIREMENTS
 -------------
 - Windows 10/11
+- Node.js and npm (for building)
 - TNY-360 robot powered on and in Access Point (AP) WiFi mode
 - PC connected to the TNY-360 WiFi network
 
 
-INSTALLATION
--------------
-1. Run "TNY-360 Dashboard Setup 1.0.0.exe"
-2. Follow the installer
-3. Launch "TNY-360 Dashboard" from the desktop or start menu
+BUILD FROM SOURCE
+------------------
+1. Build the WebPortal:
+   cd Firmware/extras/WebPortal
+   npm install
+   npm run generate
+
+2. Build the Electron app:
+   cd dashboard-app
+   npm install
+   npx electron-builder
+
+   Output: dashboard-app/dist/TNY-360 Dashboard Setup 1.0.0.exe
+
+3. Run the installer and launch "TNY-360 Dashboard" from the desktop or start menu.
 
 
 USAGE
@@ -45,23 +56,6 @@ dashboard-app/
 The WebPortal files are bundled from:
   Firmware/extras/WebPortal/.output/public/
 (generated via "npm run generate" in the WebPortal directory)
-
-
-BUILD FROM SOURCE
-------------------
-Requirements: Node.js, npm
-
-1. Build the WebPortal:
-   cd Firmware/extras/WebPortal
-   npm install
-   npm run generate
-
-2. Build the Electron app:
-   cd dashboard-app
-   npm install
-   npx electron-builder
-
-Output: dashboard-app/dist/TNY-360 Dashboard Setup 1.0.0.exe
 
 
 TECHNICAL NOTES
