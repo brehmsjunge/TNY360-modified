@@ -41,7 +41,7 @@ A desktop application wrapping the existing WebPortal dashboard, with a switchab
 📋 Planned
 
 Active Cooling
--2x 30x30mm 12V fans mounted on the top cover.
+- 2x 30x30mm 12V fans mounted on the top cover.
   One intake (cold air in), one exhaust (warm air out) — airflow across the Buck Converter and PCBs.
   New top cover design with fan cutouts (OpenSCAD, replacing the logo cover).
 - Arduino I2C Sensor Integration
@@ -54,9 +54,6 @@ Active Cooling
   Target: Arduino Uno Q running ROS2 / Nav2 as master, TNY-360 mainboard as movement slave.
 - Reinforcement Learning Gait
   Teaching T360 to walk using AI instead of pre-programmed gaits.
-
-
-
 
 ---
 
