@@ -33,13 +33,13 @@ This fork documents my own modifications and extensions on top of their work.
 
 
 - USB Serial Dashboard Transport (SerialTransport.hpp/.cpp) -> Access the robot dashboard over USB instead of WiFi only.
-- Desktop Dashboard App -> A desktop application wrapping the existing WebPortal dashboard, with a switchable connection mode — WiFi (WebSocket, same as today) or USB Serial (no need to swap WiFi networks).
+- Desktop Dashboard App -> A desktop application wrapping the existing WebPortal dashboard, with a switchable connection mode —> WiFi (WebSocket, same as today) or USB Serial (no need to swap WiFi networks).
 
 
 📋 Planned
 
 Active Cooling
-- 2x 30x30mm 12V fans mounted on the top cover -> One intake (cold air in), one exhaust (warm air out) — airflow across the Buck Converter and PCBs / New top cover design with fan cutouts (OpenSCAD, replacing the logo cover).
+- 2x 30x30mm 12V fans mounted on the top cover -> One intake (cold air in), one exhaust (warm air out) —> airflow across the Buck Converter and PCBs / New top cover design with fan cutouts (OpenSCAD, replacing the logo cover).
 - Arduino I2C Sensor Integration -> Arduino Uno as I2C sensor node (LiDAR data), feeding into the TNY-360 mainboard via the dorsal expansion port / Later upgrade: Arduino Uno Q (Linux + MCU) for on-device AI processing.
 - LiDAR + Thermal Camera Expansion -> For autonomous navigation (SLAM) and person detection
 - Autonomous Navigation (SLAM) -> Path planning + obstacle avoidance using LiDAR data / Target: Arduino Uno Q running ROS2 / Nav2 as master, TNY-360 mainboard as movement slave.
