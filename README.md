@@ -24,6 +24,7 @@ This fork documents my own modifications and extensions on top of their work.
   Target: Arduino Uno Q running ROS2 / Nav2 as master, TNY-360 mainboard as movement slave.
 - **Reinforcement Learning Gait**  
   Teaching T360 to walk using AI instead of pre-programmed gaits.
+  
 ## 🚀 Getting Started
 For building and assembling the base robot, **follow the original guide:**
 <div align="center">
