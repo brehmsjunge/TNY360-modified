@@ -40,42 +40,23 @@ A desktop application wrapping the existing WebPortal dashboard, with a switchab
 
 📋 Planned
 
-
 Active Cooling
-2x 30x30mm 12V fans mounted on the top cover.
-One intake (cold air in), one exhaust (warm air out) — airflow across the Buck Converter and PCBs.
-New top cover design with fan cutouts (OpenSCAD, replacing the logo cover).
-Arduino I2C Sensor Integration
-Arduino Uno as I2C sensor node (LiDAR data), feeding into the TNY-360 mainboard via the dorsal expansion port.
-Later upgrade: Arduino Uno Q (Linux + MCU) for on-device AI processing.
-LiDAR + Thermal Camera Expansion
-For autonomous navigation (SLAM) and person detection
-Autonomous Navigation (SLAM)
-Path planning + obstacle avoidance using LiDAR data.
-Target: Arduino Uno Q running ROS2 / Nav2 as master, TNY-360 mainboard as movement slave.
-Reinforcement Learning Gait
-Teaching T360 to walk using AI instead of pre-programmed gaits.
+-2x 30x30mm 12V fans mounted on the top cover.
+  One intake (cold air in), one exhaust (warm air out) — airflow across the Buck Converter and PCBs.
+  New top cover design with fan cutouts (OpenSCAD, replacing the logo cover).
+- Arduino I2C Sensor Integration
+  Arduino Uno as I2C sensor node (LiDAR data), feeding into the TNY-360 mainboard via the dorsal expansion port.
+  Later upgrade: Arduino Uno Q (Linux + MCU) for on-device AI processing.
+- LiDAR + Thermal Camera Expansion
+  For autonomous navigation (SLAM) and person detection
+- Autonomous Navigation (SLAM)
+  Path planning + obstacle avoidance using LiDAR data.
+  Target: Arduino Uno Q running ROS2 / Nav2 as master, TNY-360 mainboard as movement slave.
+- Reinforcement Learning Gait
+  Teaching T360 to walk using AI instead of pre-programmed gaits.
 
 
 
-
----
-
-## 🎯 Use Cases / Vision
-
-### 🐾 Therapy Companion
-Filling availability gaps where therapy dogs can't be present (allergies, hygiene restrictions).  
-- Children's wards: distraction before procedures, guided walks, rewards
-- Care homes: interaction rituals, responsive to petting, calming for dementia patients
-- Requires: multi-layer safety system (auto-slowdown, hardware e-stop, fail-safes)
-
-### 🔦 Search & Rescue Scout
-Navigate dangerous or confined spaces inaccessible to humans or rescue dogs.  
-- Thermal camera: detect body heat through smoke or darkness
-- LiDAR: real-time mapping for rescue teams
-
-### 🏗️ Confined Space Inspection
-Crawl spaces, ceiling voids, ventilation shafts — anywhere too tight or risky for a human.
 
 ---
 
